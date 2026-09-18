@@ -1,0 +1,22 @@
+####
+# All Pfizer repos must identify themselves with a .pfizer.yml file.
+# Keep this file up to date.
+# Policy https://confluence.pfizer.com/display/DSOEPipeline/Repository+Identification
+####
+
+####
+## Look up the CMDB in the Application CI Editor (ACIE)
+## https://acie.pfizer.com/App
+## If an application is not listed `~` is an acceptable value.
+###
+
+cmdb_id: ~
+primary_contact: banovm01
+
+####
+## Optional settings. Uncomment the lines below.
+## Check the policy for details.
+###
+# additional_contacts:
+#  -
+# jira_project: XYZ
