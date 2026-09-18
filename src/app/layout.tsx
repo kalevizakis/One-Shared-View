@@ -2,10 +2,8 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
+import { Toaster } from "@/components/ui/sonner";
 
-// Pfizer Tomorrow font (local)
 const pfizerTomorrow = localFont({
   src: [
     {
@@ -18,7 +16,6 @@ const pfizerTomorrow = localFont({
   fallback: ["Arial", "sans-serif"],
 });
 
-// Pfizer Diatype font (local) - Multiple weights
 const pfizerDiatype = localFont({
   src: [
     {
@@ -42,8 +39,9 @@ const pfizerDiatype = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Spark Build",
-  description: "Build apps, sites, and presentations from just an idea",
+  title: "One Shared View",
+  description:
+    "One structured weekly update per project — a current portfolio view and leadership-ready reports for the CMO Digital LT.",
 };
 
 export default function RootLayout({
@@ -58,15 +56,18 @@ export default function RootLayout({
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >
-          <div className="flex min-h-screen flex-col">
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground"
+          >
+            Skip to main content
+          </a>
+          {children}
+          <Toaster position="bottom-right" />
         </ThemeProvider>
       </body>
     </html>

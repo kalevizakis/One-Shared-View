@@ -9,7 +9,7 @@
 
 | Note | Purpose | Delete When | Referenced In |
 |------|---------|-------------|---------------|
-| template-project.md | Template defaults that must be replaced | Template defaults replaced | current-context.md |
+| (none) | | | |
 
 ---
 
