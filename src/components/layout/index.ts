@@ -1,6 +1,7 @@
 export { AccessProblem } from "./access-problem"
 export { AppHeader } from "./app-header"
 export { AppNav } from "./app-nav"
+export { PreviewBanner } from "./preview-banner"
 export { UserMenu } from "./user-menu"
 export { ThemeToggle } from "./theme-toggle"
 export { SparkBolt } from "./spark-bolt"

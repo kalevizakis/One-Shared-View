@@ -8,19 +8,42 @@ import { canAdminister, canManageReporting } from "@/lib/domain/status";
 
 interface AppNavProps {
   role: UserRole;
+  isPreview?: boolean;
   className?: string;
   onNavigate?: () => void;
 }
 
-export function AppNav({ role, className, onNavigate }: AppNavProps) {
+export function AppNav({
+  role,
+  isPreview = false,
+  className,
+  onNavigate,
+}: AppNavProps) {
   const pathname = usePathname();
 
+  /*
+   * Preview shows the four screens the solution is reviewed on, and never /admin.
+   *
+   * Two overrides are deliberate. "My update" normally hides for an 'exec', and
+   * preview IS an 'exec' — but the update form is one of the things a reviewer
+   * came to see, so it is shown (read-only). "Audit trail" normally needs
+   * lead/admin, and preview must not have either role, so it is opened here and
+   * matched by a SELECT-only RLS policy rather than by promoting the role.
+   *
+   * Hiding /admin is presentation only. The page itself still redirects on its
+   * own `canAdminister` check, and every admin action is refused server-side, so
+   * typing the URL gains nothing.
+   */
   const links = [
     { href: "/", label: "Portfolio", show: true },
-    { href: "/my-update", label: "My update", show: role !== "exec" },
+    { href: "/my-update", label: "My update", show: isPreview || role !== "exec" },
     { href: "/reports", label: "Reports", show: true },
-    { href: "/audit", label: "Audit trail", show: canManageReporting(role) },
-    { href: "/admin", label: "Admin", show: canAdminister(role) },
+    {
+      href: "/audit",
+      label: "Audit trail",
+      show: isPreview || canManageReporting(role),
+    },
+    { href: "/admin", label: "Admin", show: !isPreview && canAdminister(role) },
   ].filter((link) => link.show);
 
   return (

@@ -128,7 +128,9 @@ async function Dashboard({ searchParams }: PageProps) {
             missing={metrics.missing}
             staleCount={metrics.stale.length}
             reminders={reminders}
-            canSendReminders={canManageReporting(session.profile.role)}
+            canSendReminders={
+              !session.isPreview && canManageReporting(session.profile.role)
+            }
           />
 
           {blockedProject ? <ExceptionCallout project={blockedProject} /> : null}

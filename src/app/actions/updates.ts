@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { getSessionForAction } from "@/lib/data/queries";
+import { requireWritableSession } from "@/lib/data/queries";
 import { projectUpdateSchema } from "@/lib/domain/validation";
 import type { ActionResult } from "@/app/actions/auth";
 
@@ -18,7 +18,7 @@ function optional(value: FormDataEntryValue | null): string {
 export async function saveProjectUpdate(
   formData: FormData,
 ): Promise<ActionResult> {
-  const auth = await getSessionForAction();
+  const auth = await requireWritableSession();
   if ("error" in auth) return { error: auth.error };
   const { session } = auth;
 
@@ -109,7 +109,7 @@ export async function saveProjectUpdate(
 }
 
 export async function sendReminder(formData: FormData): Promise<ActionResult> {
-  const auth = await getSessionForAction();
+  const auth = await requireWritableSession();
   if ("error" in auth) return { error: auth.error };
   const { session } = auth;
 

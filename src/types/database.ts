@@ -20,6 +20,12 @@ export interface Profile {
   job_title: string | null;
   role: UserRole;
   active: boolean;
+  /**
+   * True only for the single shared "Preview the solution" identity. A dedicated
+   * column rather than a magic NTID string, so a future roster row can never
+   * collide into (or out of) the read-only preview treatment.
+   */
+  is_preview: boolean;
   created_at: string;
   updated_at: string;
 }

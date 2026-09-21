@@ -80,12 +80,24 @@ async function MyUpdate({ searchParams }: PageProps) {
     milestones.find((milestone) => milestone.status !== "complete") ?? null;
 
   const cycleLocked = cycle.status === "locked" || cycle.status === "closed";
-  const canEdit = canEditProject(
-    role,
-    profileId,
-    selectedProject.owner_profile_id,
-    selectedProject.lead_profile_id,
-  );
+
+  /*
+   * Preview is never editable, whatever the project or cycle says.
+   *
+   * It owns nothing, so `editable` is empty and the existing
+   * `editable.length > 0 ? editable : allProjects` fallback above already shows
+   * the whole portfolio — which is what a reviewer wants to see. `canEditProject`
+   * would return false for it anyway (role 'exec'); this is explicit so the
+   * read-only intent survives any future change to the role or to ownership.
+   */
+  const canEdit =
+    !session.isPreview &&
+    canEditProject(
+      role,
+      profileId,
+      selectedProject.owner_profile_id,
+      selectedProject.lead_profile_id,
+    );
 
   return (
     <div className="space-y-6">

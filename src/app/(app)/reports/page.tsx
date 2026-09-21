@@ -91,7 +91,9 @@ async function Reports({ searchParams }: PageProps) {
         metrics={metrics}
         versions={versions}
         selected={selected}
-        canManage={canManageReporting(session.profile.role)}
+        canManage={
+          !session.isPreview && canManageReporting(session.profile.role)
+        }
       />
     </div>
   );

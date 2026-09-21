@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, User } from "lucide-react";
+import { Eye, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,16 +16,29 @@ import type { Profile } from "@/types/database";
 
 interface UserMenuProps {
   profile: Profile;
+  isPreview?: boolean;
 }
 
-export function UserMenu({ profile }: UserMenuProps) {
-  const initials = profile.display_name
-    .split(" ")
-    .map((part) => part[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
+export function UserMenu({ profile, isPreview = false }: UserMenuProps) {
+  /*
+   * In preview there is no person to identify, so showing "PREVIEW" as though it
+   * were somebody's NTID would be misleading. An icon replaces the initials, and
+   * the label says what this session is instead of who it is.
+   *
+   * The initials computation is guarded: "Preview (read-only)" would otherwise
+   * produce "P(" from the bracket. Real display names are unaffected.
+   */
+  const initials = isPreview
+    ? ""
+    : profile.display_name
+        .split(" ")
+        .map((part) => part.replace(/[^\p{L}\p{N}]/gu, "")[0])
+        .filter(Boolean)
+        .slice(0, 2)
+        .join("")
+        .toUpperCase();
+
+  const label = isPreview ? "Preview · read-only" : profile.ntid.toUpperCase();
 
   return (
     <DropdownMenu>
@@ -33,34 +46,53 @@ export function UserMenu({ profile }: UserMenuProps) {
         <Button
           variant="ghost"
           className="h-9 gap-2 px-2"
-          aria-label={`Signed in as ${profile.display_name}`}
+          aria-label={
+            isPreview
+              ? "Read-only preview session"
+              : `Signed in as ${profile.display_name}`
+          }
         >
           <span className="flex size-7 items-center justify-center rounded-full bg-primary text-[0.6875rem] font-bold text-primary-foreground">
-            {initials || <User className="size-3.5" />}
+            {isPreview ? (
+              <Eye className="size-3.5" aria-hidden />
+            ) : (
+              initials || <User className="size-3.5" />
+            )}
           </span>
-          <span className="hidden text-sm font-semibold sm:inline">
-            {profile.ntid.toUpperCase()}
-          </span>
+          <span className="hidden text-sm font-semibold sm:inline">{label}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">
         <DropdownMenuLabel className="space-y-1">
-          <p className="text-sm font-semibold">{profile.display_name}</p>
-          <p className="text-xs font-normal text-muted-foreground">
-            NTID {profile.ntid.toUpperCase()} · {ROLE_LABEL[profile.role]}
+          <p className="text-sm font-semibold">
+            {isPreview ? "Read-only preview" : profile.display_name}
           </p>
-          {profile.job_title ? (
+          {isPreview ? (
             <p className="text-xs font-normal text-muted-foreground">
-              {profile.job_title}
+              Viewing real portfolio data. Nothing can be changed from this
+              session.
             </p>
-          ) : null}
+          ) : (
+            <>
+              <p className="text-xs font-normal text-muted-foreground">
+                NTID {profile.ntid.toUpperCase()} · {ROLE_LABEL[profile.role]}
+              </p>
+              {profile.job_title ? (
+                <p className="text-xs font-normal text-muted-foreground">
+                  {profile.job_title}
+                </p>
+              ) : null}
+            </>
+          )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {/* signOut is intentionally NOT write-guarded — a preview visitor must
+            always be able to leave. */}
         <form action={signOut}>
           <DropdownMenuItem asChild>
             <button type="submit" className="w-full cursor-pointer">
               <LogOut className="size-4" />
-              Sign out
+              {isPreview ? "Exit preview" : "Sign out"}
             </button>
           </DropdownMenuItem>
         </form>

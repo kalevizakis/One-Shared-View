@@ -189,3 +189,21 @@ export function canManageReporting(role: UserRole): boolean {
 export function canAdminister(role: UserRole): boolean {
   return role === "admin";
 }
+
+/**
+ * VIEW GATING ONLY — may this profile open the audit screen?
+ *
+ * Deliberately separate from the three helpers above, which every write path
+ * depends on. Widening `canManageReporting` to include preview would have let the
+ * shared read-only identity generate reports, edit report narrative and send
+ * reminders; this reads the audit trail and nothing else. Matched in the database
+ * by the SELECT-only `audit_events_select_preview` policy.
+ *
+ * Never use this to authorise a change.
+ */
+export function canPreviewAudit(profile: {
+  role: UserRole;
+  is_preview: boolean;
+}): boolean {
+  return canManageReporting(profile.role) || profile.is_preview === true;
+}

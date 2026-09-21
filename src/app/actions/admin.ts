@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { getSessionForAction } from "@/lib/data/queries";
+import { requireWritableSession } from "@/lib/data/queries";
 import { canAdminister } from "@/lib/domain/status";
 import {
   cycleSchema,
@@ -21,8 +21,17 @@ function nullable(formData: FormData, key: string): string | null {
   return value === "" || value === "none" ? null : value;
 }
 
+/**
+ * Every admin action goes through here.
+ *
+ * The preview check runs first, via `requireWritableSession`, so a preview
+ * visitor is told the truth — "this is a read-only preview" — rather than the
+ * misleading "only administrators can change this". The role check would refuse
+ * them anyway (preview is 'exec'), as would RLS; this is about the message being
+ * accurate, and about the refusal not depending on the role check alone.
+ */
 async function requireAdmin() {
-  const result = await getSessionForAction();
+  const result = await requireWritableSession();
   if ("error" in result) return { error: result.error } as const;
   if (!canAdminister(result.session.profile.role)) {
     return { error: "Only administrators can change this." } as const;

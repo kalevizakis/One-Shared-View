@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/layout/app-header";
 import { AccessProblem } from "@/components/layout/access-problem";
+import { PreviewBanner } from "@/components/layout/preview-banner";
 import { getSessionContext, SessionUnavailableError } from "@/lib/data/queries";
 import type { SessionContext } from "@/lib/data/queries";
 
@@ -26,7 +27,9 @@ export default async function AppLayout({
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <AppHeader profile={session.profile} />
+      <AppHeader profile={session.profile} isPreview={session.isPreview} />
+      {/* Rendered here so it appears on every authenticated screen, not per page. */}
+      {session.isPreview ? <PreviewBanner /> : null}
       <main
         id="main-content"
         className="mx-auto w-full max-w-[1540px] flex-1 px-4 py-7 sm:px-6 lg:px-10 lg:py-9"

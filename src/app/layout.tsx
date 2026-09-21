@@ -42,6 +42,14 @@ export const metadata: Metadata = {
   title: "One Shared View",
   description:
     "One structured weekly update per project — a current portfolio view and leadership-ready reports for the CMO Digital LT.",
+  /*
+   * Never indexed. This application holds internal delivery information — real
+   * names, job titles, project health and leadership asks — and the read-only
+   * preview makes some of it reachable to anyone inside Pfizer holding the link.
+   * None of it belongs in a search index, so the refusal is declared once here
+   * for every route rather than per page.
+   */
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({

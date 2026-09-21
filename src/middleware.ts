@@ -50,7 +50,26 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  /*
+   * A session already exists, so /login normally has nothing to offer and the
+   * visitor is sent on to the app.
+   *
+   * `?switch=1` is the deliberate exception: it means "I am here on purpose to
+   * sign in as somebody else". Without it, a read-only preview visitor who wants
+   * to sign in properly is bounced straight back to the preview and can never
+   * reach the NTID form — the preview banner's sign-in link would be a dead end.
+   *
+   * An explicit intent flag is used rather than looking up `profiles.is_preview`
+   * here, for two reasons: middleware runs on every single request, so a roster
+   * query would be a database round trip per navigation; and the JWT carries no
+   * roster data, only auth claims. It also fixes the same dead end for a real
+   * user who wants to switch accounts.
+   */
   if (data?.claims && pathname === "/login") {
+    if (request.nextUrl.searchParams.get("switch") === "1") {
+      return response;
+    }
+
     const url = request.nextUrl.clone();
     // Honour ?next= so a deep link survives the sign-in round trip, but only
     // for internal paths — an absolute URL here would be an open redirect.

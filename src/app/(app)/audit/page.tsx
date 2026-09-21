@@ -8,7 +8,7 @@ import {
   getProfiles,
   getSessionContext,
 } from "@/lib/data/queries";
-import { canManageReporting } from "@/lib/domain/status";
+import { canPreviewAudit } from "@/lib/domain/status";
 import { ANY_VALUE, filterValue } from "@/lib/domain/audit";
 
 interface PageProps {
@@ -28,8 +28,16 @@ async function Audit({ searchParams }: PageProps) {
   const session = await getSessionContext();
   if (!session) return null;
 
-  // Audit records are readable by portfolio leads and administrators only.
-  if (!canManageReporting(session.profile.role)) redirect("/");
+  /*
+   * Readable by portfolio leads, administrators, and the read-only preview.
+   *
+   * `canPreviewAudit` is a VIEW gate and nothing else — preview is still role
+   * 'exec', so it cannot generate a report, edit a narrative or send a reminder.
+   * The database agrees independently: `audit_events_select_preview` is a
+   * SELECT-only policy, and `authenticated` holds no insert/update/delete
+   * privilege on the table at all.
+   */
+  if (!canPreviewAudit(session.profile)) redirect("/");
 
   const [events, people] = await Promise.all([
     getAuditEvents({

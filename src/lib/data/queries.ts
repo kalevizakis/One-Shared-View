@@ -18,6 +18,12 @@ import type {
 export interface SessionContext {
   profile: Profile;
   portfolio: Portfolio | null;
+  /**
+   * True when this is the shared read-only preview identity. Drives the banner,
+   * the disabled controls, and — via `requireWritableSession` — the refusal of
+   * every mutating Server Action.
+   */
+  isPreview: boolean;
 }
 
 /**
@@ -67,7 +73,13 @@ export async function getSessionContext(): Promise<SessionContext | null> {
     .limit(1)
     .maybeSingle();
 
-  return { profile: profile as Profile, portfolio: portfolio as Portfolio | null };
+  const row = profile as Profile;
+
+  return {
+    profile: row,
+    portfolio: portfolio as Portfolio | null,
+    isPreview: row.is_preview === true,
+  };
 }
 
 /**
@@ -88,6 +100,38 @@ export async function getSessionForAction(): Promise<
     }
     throw error;
   }
+}
+
+export const PREVIEW_READ_ONLY_MESSAGE =
+  "This is a read-only preview. Sign in with your NTID to make changes.";
+
+/**
+ * Session lookup for every MUTATING Server Action.
+ *
+ * Disabling a button only stops the button. A Server Action is an HTTP endpoint,
+ * so anyone holding a preview session cookie can invoke one directly by crafting
+ * a POST with the `next-action` header — which is exactly what the UI disabling
+ * cannot defend against. This guard is that defence, and it sits at the boundary
+ * every write has to cross.
+ *
+ * It is belt-and-braces rather than the only protection: the preview identity is
+ * role 'exec' and owns nothing, so RLS refuses its writes at the database too.
+ * The guard exists so the visitor gets a readable explanation instead of a raw
+ * permission error, and so the refusal does not depend on any one RLS policy
+ * staying correct forever.
+ *
+ * Read-only actions keep using `getSessionForAction` — preview must be able to
+ * browse, and `signOut` must keep working so a visitor can leave.
+ */
+export async function requireWritableSession(): Promise<
+  { session: SessionContext } | { error: string }
+> {
+  const result = await getSessionForAction();
+  if ("error" in result) return result;
+  if (result.session.isPreview) {
+    return { error: PREVIEW_READ_ONLY_MESSAGE };
+  }
+  return result;
 }
 
 export async function getProfiles(): Promise<Profile[]> {

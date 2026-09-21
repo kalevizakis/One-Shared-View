@@ -13,9 +13,10 @@ import type { Profile } from "@/types/database";
 
 interface AppHeaderProps {
   profile: Profile;
+  isPreview?: boolean;
 }
 
-export function AppHeader({ profile }: AppHeaderProps) {
+export function AppHeader({ profile, isPreview = false }: AppHeaderProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -40,11 +41,15 @@ export function AppHeader({ profile }: AppHeaderProps) {
           </span>
         </Link>
 
-        <AppNav role={profile.role} className="ml-6 hidden lg:flex" />
+        <AppNav
+          role={profile.role}
+          isPreview={isPreview}
+          className="ml-6 hidden lg:flex"
+        />
 
         <div className="ml-auto flex items-center gap-1.5">
           <ThemeToggle />
-          <UserMenu profile={profile} />
+          <UserMenu profile={profile} isPreview={isPreview} />
 
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
@@ -61,6 +66,7 @@ export function AppHeader({ profile }: AppHeaderProps) {
               <SheetTitle className="mb-4 text-base">Navigation</SheetTitle>
               <AppNav
                 role={profile.role}
+                isPreview={isPreview}
                 className="flex-col items-stretch"
                 onNavigate={() => setOpen(false)}
               />

@@ -81,6 +81,16 @@ const CONFIRMATION_BLOCKED =
 const STALE_LOGIN_RECORD =
   "This NTID has a sign-in record left over from the old password screen, which cannot be used any more. An administrator needs to clear it — your roster entry and role are not affected.";
 
+/**
+ * Surfaced when the read-only preview session cannot be started.
+ *
+ * Almost always means the preview identity migration has not been applied yet,
+ * so there is no roster row for the session to link to. Says so, because the
+ * alternative is a dead button with no explanation.
+ */
+const PREVIEW_UNAVAILABLE =
+  "The read-only preview is not available yet. An administrator needs to apply the preview identity to the database. You can still sign in with your NTID.";
+
 interface RosterVerdict {
   allowed: boolean;
   reason?: string;
@@ -180,6 +190,84 @@ export async function signInWithNtid(formData: FormData): Promise<ActionResult> 
 
   revalidatePath("/", "layout");
   redirect("/");
+}
+
+/**
+ * The NTID of the single shared read-only preview identity.
+ *
+ * Only ever used to ISSUE the preview session — never to recognise one. Anything
+ * that needs to ask "is this session a preview?" reads `profiles.is_preview`
+ * (surfaced as `SessionContext.isPreview`), because a future roster row could
+ * collide with this string.
+ */
+const PREVIEW_NTID = "preview";
+
+/**
+ * Starts the read-only "Preview the solution" session.
+ *
+ * Reuses the exact same session machinery as a real NTID sign-in — same derived
+ * credential, same sign-up-then-retry on first use, same roster link — so there
+ * is one session mechanism in this app, not two.
+ *
+ * `ntid_signin_check` is deliberately NOT called first. That function's whole
+ * purpose is to answer "is this visitor-supplied NTID on the roster?", and the
+ * answer here is known at build time. Calling it would widen its surface for no
+ * benefit.
+ *
+ * Read-only is not enforced here. It is enforced by the roster row this session
+ * links to: role 'exec', owning no project and leading no portfolio, which every
+ * write RLS policy refuses. `requireWritableSession` then turns that refusal into
+ * a readable message at the Server Action boundary.
+ */
+export async function startPreview(): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const email = addressFor(PREVIEW_NTID);
+  const password = derivedSecretFor(PREVIEW_NTID);
+
+  let signedIn = false;
+  const attempt = await supabase.auth.signInWithPassword({ email, password });
+
+  if (attempt.error) {
+    // First ever preview visit: create the login record, then retry.
+    const created = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { display_name: "Preview (read-only)" } },
+    });
+
+    if (created.error) {
+      return { error: PREVIEW_UNAVAILABLE };
+    }
+
+    const retry = await supabase.auth.signInWithPassword({ email, password });
+
+    if (retry.error?.code === "email_not_confirmed") {
+      return { error: CONFIRMATION_BLOCKED };
+    }
+
+    signedIn = !retry.error;
+  } else {
+    signedIn = true;
+  }
+
+  if (!signedIn) {
+    return { error: PREVIEW_UNAVAILABLE };
+  }
+
+  // Attach the session to the preview roster row. Without this the session has
+  // no profile, and the app correctly refuses to show anything at all.
+  const { error: linkError } = await supabase.rpc("link_auth_user_to_roster", {
+    p_ntid: PREVIEW_NTID,
+  });
+
+  if (linkError) {
+    await supabase.auth.signOut();
+    return { error: PREVIEW_UNAVAILABLE };
+  }
+
+  revalidatePath("/", "layout");
+  redirect("/?preview=1");
 }
 
 export async function signOut(): Promise<void> {

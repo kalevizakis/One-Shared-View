@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   getProjectsWithContext,
   getReportsForCycle,
-  getSessionForAction,
+  requireWritableSession,
 } from "@/lib/data/queries";
 import { reportSchema } from "@/lib/domain/validation";
 import { canManageReporting } from "@/lib/domain/status";
@@ -23,7 +23,7 @@ function optional(value: FormDataEntryValue | null): string {
 export async function generateReport(
   formData: FormData,
 ): Promise<ActionResult & { reportId?: string }> {
-  const auth = await getSessionForAction();
+  const auth = await requireWritableSession();
   if ("error" in auth) return { error: auth.error };
   const { session } = auth;
   if (!canManageReporting(session.profile.role)) {
@@ -84,7 +84,7 @@ export async function generateReport(
 export async function updateReportNarrative(
   formData: FormData,
 ): Promise<ActionResult> {
-  const auth = await getSessionForAction();
+  const auth = await requireWritableSession();
   if ("error" in auth) return { error: auth.error };
   const { session } = auth;
   if (!canManageReporting(session.profile.role)) {
