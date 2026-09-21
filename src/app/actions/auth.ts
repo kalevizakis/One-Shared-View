@@ -91,6 +91,18 @@ const STALE_LOGIN_RECORD =
 const PREVIEW_UNAVAILABLE =
   "The read-only preview is not available yet. An administrator needs to apply the preview identity to the database. You can still sign in with your NTID.";
 
+/**
+ * Surfaced when the preview identity EXISTS but attaching the session to it was
+ * refused by the database.
+ *
+ * Kept distinct from PREVIEW_UNAVAILABLE on purpose. Collapsing the two is what
+ * made the "preview only works once" bug hard to find: the message said the
+ * migration was missing when in fact it was applied and the roster guard was
+ * refusing the link.
+ */
+const PREVIEW_LINK_FAILED =
+  "The read-only preview could not be opened because the database refused to attach the session. An administrator needs to check the preview identity.";
+
 interface RosterVerdict {
   allowed: boolean;
   reason?: string;
@@ -263,7 +275,20 @@ export async function startPreview(): Promise<ActionResult> {
 
   if (linkError) {
     await supabase.auth.signOut();
-    return { error: PREVIEW_UNAVAILABLE };
+
+    /*
+     * Distinguish "the identity is missing" from "the identity is there but the
+     * link was refused". Reporting both as PREVIEW_UNAVAILABLE sent us looking
+     * for an unapplied migration when the real cause was the roster guard
+     * blocking the preview session's own sign-in link — see migration
+     * 20260921160000. A refusal names itself now, so the next occurrence is one
+     * step to diagnose instead of a hunt.
+     */
+    return {
+      error: linkError.message?.includes("ROSTER_LINK_REFUSED")
+        ? PREVIEW_UNAVAILABLE
+        : `${PREVIEW_LINK_FAILED} (${linkError.message})`,
+    };
   }
 
   revalidatePath("/", "layout");
