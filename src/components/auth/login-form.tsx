@@ -6,13 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { register, signIn } from "@/app/actions/auth";
+import { signInWithNtid } from "@/app/actions/auth";
 
 export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const [mode, setMode] = useState<"signin" | "register">("signin");
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -20,8 +18,7 @@ export function LoginForm() {
     const formData = new FormData(event.currentTarget);
 
     startTransition(async () => {
-      const action = mode === "signin" ? signIn : register;
-      const result = await action(formData);
+      const result = await signInWithNtid(formData);
       if (result?.error) setError(result.error);
     });
   }
@@ -35,71 +32,43 @@ export function LoginForm() {
           </p>
           <h1 className="text-2xl font-bold">One Shared View</h1>
           <p className="text-sm text-muted-foreground">
-            Sign in with your NTID to submit updates and view the portfolio.
+            Enter your NTID to continue. Access is granted to the CMO Digital LT
+            roster.
           </p>
         </div>
 
-        <Tabs
-          value={mode}
-          onValueChange={(value) => {
-            setMode(value as "signin" | "register");
-            setError(null);
-          }}
-        >
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="signin">Sign in</TabsTrigger>
-            <TabsTrigger value="register">First time</TabsTrigger>
-          </TabsList>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="ntid">NTID</Label>
+            <Input
+              id="ntid"
+              name="ntid"
+              autoComplete="username"
+              placeholder="Your NTID"
+              required
+              minLength={3}
+              maxLength={20}
+              pattern="[A-Za-z0-9]+"
+              className="lowercase"
+              autoFocus
+              aria-describedby="ntid-help"
+            />
+            <p id="ntid-help" className="text-xs text-muted-foreground">
+              No password needed — your NTID is checked against the roster.
+            </p>
+          </div>
 
-          <TabsContent value="signin" className="mt-5">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <NtidField />
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  minLength={8}
-                />
-              </div>
-              <SubmitButton pending={pending} label="Sign in" />
-            </form>
-          </TabsContent>
-
-          <TabsContent value="register" className="mt-5">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <NtidField />
-              <div className="space-y-2">
-                <Label htmlFor="displayName">Your name</Label>
-                <Input
-                  id="displayName"
-                  name="displayName"
-                  autoComplete="name"
-                  placeholder="First and last name"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="register-password">Choose a password</Label>
-                <Input
-                  id="register-password"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  minLength={8}
-                />
-                <p className="text-xs text-muted-foreground">
-                  At least 8 characters. Your NTID must already be on the LT roster.
-                </p>
-              </div>
-              <SubmitButton pending={pending} label="Create my access" />
-            </form>
-          </TabsContent>
-        </Tabs>
+          <Button type="submit" className="w-full" disabled={pending}>
+            {pending ? (
+              <>
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+                Checking the roster
+              </>
+            ) : (
+              "Continue"
+            )}
+          </Button>
+        </form>
 
         {error ? (
           <Alert variant="destructive" className="mt-4">
@@ -115,38 +84,5 @@ export function LoginForm() {
         the CMO Digital LT roster and every change is recorded in the audit trail.
       </p>
     </div>
-  );
-}
-
-function NtidField() {
-  return (
-    <div className="space-y-2">
-      <Label htmlFor="ntid">NTID</Label>
-      <Input
-        id="ntid"
-        name="ntid"
-        autoComplete="username"
-        placeholder="Your NTID"
-        required
-        minLength={3}
-        pattern="[A-Za-z0-9]+"
-        className="lowercase"
-      />
-    </div>
-  );
-}
-
-function SubmitButton({ pending, label }: { pending: boolean; label: string }) {
-  return (
-    <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? (
-        <>
-          <Loader2 className="size-4 animate-spin" />
-          Please wait
-        </>
-      ) : (
-        label
-      )}
-    </Button>
   );
 }

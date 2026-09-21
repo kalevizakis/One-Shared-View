@@ -113,7 +113,7 @@ export async function saveProfileAccess(
   return { message: "Access updated." };
 }
 
-/** Adds a person to the roster so they can register with their NTID. */
+/** Adds a person to the roster, which is what grants them access. */
 export async function addRosterPerson(formData: FormData): Promise<ActionResult> {
   const guard = await requireAdmin();
   if ("error" in guard) return { error: guard.error };
@@ -146,7 +146,7 @@ export async function addRosterPerson(formData: FormData): Promise<ActionResult>
   }
 
   revalidatePath("/admin");
-  return { message: `${displayName} added. They can now register with ${ntid}.` };
+  return { message: `${displayName} added. They can sign in with ${ntid} now.` };
 }
 
 /** Creates or updates a reporting cycle, including opening/locking it. */

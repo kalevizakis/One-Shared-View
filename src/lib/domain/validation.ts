@@ -97,13 +97,13 @@ export const ntidSchema = z
   .max(20, "That NTID looks too long.")
   .regex(/^[a-z0-9]+$/, "An NTID contains only letters and numbers.");
 
-export const signInSchema = z.object({
+/**
+ * MVP sign-in takes an NTID and nothing else — the roster decides access and
+ * there is no password for anyone to choose or mistype. See the 2026-09-21
+ * decision record for the trade-off this accepts.
+ */
+export const ntidSignInSchema = z.object({
   ntid: ntidSchema,
-  password: z.string().min(8, "Your password must be at least 8 characters."),
-});
-
-export const registerSchema = signInSchema.extend({
-  displayName: requiredText("Your name", 2).max(120),
 });
 
 export const reportSchema = z.object({
