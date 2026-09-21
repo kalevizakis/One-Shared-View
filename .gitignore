@@ -51,3 +51,5 @@ next-env.d.ts
 # supabase CLI local state (contains the pooler connection string / project ref)
 supabase/.temp/
 supabase/.branches/
+
+.agent-browser/

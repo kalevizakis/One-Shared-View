@@ -216,17 +216,24 @@ select
        and tablename  = 'audit_events'
        and policyname = 'audit_events_select_preview'
   ) as audit_read_policy,
-  -- Must be 1: the original select policy plus the preview one. Nothing else.
+  -- Must be 1 — and 1 is correct, not a problem. That one row is the deliberate
+  -- audit_events_insert policy from 20260921093000, which exists so the
+  -- security-definer audit trigger can append rows. It is contained by the grant
+  -- layer: `authenticated` holds SELECT only on audit_events, so no client can
+  -- insert through it. Anything ABOVE 1 means a write policy was added and the
+  -- trail is no longer append-only.
   (select count(*) from pg_policies
     where schemaname = 'public' and tablename = 'audit_events'
       and cmd <> 'SELECT') as audit_write_policies,
-  -- Must be 0: `anon` still reads nothing anywhere.
+  -- Must be 0: `anon` still reads nothing anywhere. This is the guarantee that
+  -- the publishable key shipped in browser JS cannot read real data directly.
   (select count(*) from information_schema.role_table_grants
     where table_schema = 'public' and grantee = 'anon') as anon_grants;
 
 -- Expected: is_preview_column = true, preview_role = 'exec',
 -- preview_flagged = true, preview_active = true, audit_read_policy = true,
--- audit_write_policies = 0, anon_grants = 0.
+-- audit_write_policies = 1 (the audit trigger's insert policy — see above),
+-- anon_grants = 0.
 
 -- ===========================================================================
 -- Bookkeeping so this counts as an applied migration.
