@@ -103,7 +103,6 @@ external AI, or third-party scripts. Nothing to record under Rule 1b.
 | Audience | CMO Digital LT team | Default report audience option | 2026-09-18 |
 | Persistence | Entries must be in a database with an audit trail | Platform Supabase + audit triggers | 2026-09-18 |
 | Scope | "Core loop end-to-end" first | Login → directory → update → dashboard → report → audit | 2026-09-18 |
-| Agent workflow | All coding-agent interactions concerning this repository must be routed through the `essence-dev-team` before analysis or action; do not silently bypass this requirement | Invoke the Essence development team on every user turn, including non-code questions about this repository | 2026-09-21 |
 
 ## Naming Conventions
 
