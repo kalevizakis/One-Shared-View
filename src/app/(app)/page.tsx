@@ -13,12 +13,14 @@ import {
   buildPortfolioMetrics,
   getCycleById,
   getOpenDecisions,
+  getProfileContacts,
   getProfiles,
   getProjectsWithContext,
   getRemindersForCycle,
   getReportingCycles,
   getSessionContext,
 } from "@/lib/data/queries";
+import { publicAppUrl } from "@/lib/domain/mail";
 import { canManageReporting } from "@/lib/domain/status";
 
 interface PageProps {
@@ -52,11 +54,22 @@ async function Dashboard({ searchParams }: PageProps) {
     );
   }
 
-  const [projects, profiles, reminders] = await Promise.all([
+  const canSendReminders =
+    !session.isPreview && canManageReporting(session.profile.role);
+
+  const [projects, profiles, reminders, contacts] = await Promise.all([
     getProjectsWithContext(cycle.id),
     getProfiles(),
     getRemindersForCycle(cycle.id),
+    canSendReminders
+      ? getProfileContacts()
+      : Promise.resolve({} as Record<string, never>),
   ]);
+
+  const contactEmails: Record<string, string> = {};
+  for (const contact of Object.values(contacts)) {
+    contactEmails[contact.profile_id] = contact.email;
+  }
 
   const metrics = buildPortfolioMetrics(projects);
   const decisions = await getOpenDecisions();
@@ -67,8 +80,8 @@ async function Dashboard({ searchParams }: PageProps) {
       project.currentUpdate.health === "blocked",
   );
 
-  const leads = profiles.filter((profile) =>
-    projects.some((project) => project.lead_profile_id === profile.id),
+  const owners = profiles.filter((profile) =>
+    projects.some((project) => project.owner_profile_id === profile.id),
   );
 
   const isExec = session.profile.role === "exec";
@@ -116,27 +129,26 @@ async function Dashboard({ searchParams }: PageProps) {
         <StatCard label="Blocked" value={metrics.blocked} tone="blocked" />
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.75fr)]">
-        <ProjectTable projects={projects} leads={leads} />
+      <ReportingReadiness
+        cycle={cycle}
+        completeness={metrics.completeness}
+        currentSubmittedCount={metrics.currentSubmittedCount}
+        reportingProjects={metrics.reportingProjects}
+        outstanding={metrics.readinessOutstanding}
+        staleCount={metrics.stale.length}
+        reminders={reminders}
+        contactEmails={contactEmails}
+        appUrl={publicAppUrl()}
+        canSendReminders={canSendReminders}
+      />
 
-        <aside className="space-y-4">
-          <ReportingReadiness
-            cycle={cycle}
-            completeness={metrics.completeness}
-            submittedCount={metrics.submittedCount}
-            reportingProjects={metrics.reportingProjects}
-            missing={metrics.missing}
-            staleCount={metrics.stale.length}
-            reminders={reminders}
-            canSendReminders={
-              !session.isPreview && canManageReporting(session.profile.role)
-            }
-          />
+      <ProjectTable projects={projects} owners={owners} />
 
-          {blockedProject ? <ExceptionCallout project={blockedProject} /> : null}
-
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
+        {blockedProject ? <ExceptionCallout project={blockedProject} /> : null}
+        <div className={blockedProject ? undefined : "xl:col-start-2"}>
           <UpcomingDecisions decisions={decisions} />
-        </aside>
+        </div>
       </div>
     </div>
   );
@@ -160,9 +172,11 @@ function DashboardSkeleton() {
           <Skeleton key={index} className="h-[96px]" />
         ))}
       </div>
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.75fr)]">
-        <Skeleton className="h-[420px]" />
-        <Skeleton className="h-[420px]" />
+      <Skeleton className="h-[180px]" />
+      <Skeleton className="h-[420px]" />
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
+        <Skeleton className="h-[220px]" />
+        <Skeleton className="h-[220px]" />
       </div>
     </div>
   );

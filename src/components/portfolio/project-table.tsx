@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, ArrowUpRight, Clock } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, ChevronDown, Clock } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -19,35 +19,62 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { HealthBadge } from "@/components/shared/health-badge";
 import { cn } from "@/lib/utils";
 import {
   HEALTH_LABEL,
+  IMPACT_LABEL,
+  LIFECYCLE_LABEL,
   formatShortDate,
   isOverdue,
   isStale,
   relativeDay,
 } from "@/lib/domain/status";
-import type { HealthStatus, Profile, ProjectWithContext } from "@/types/database";
+import type {
+  HealthStatus,
+  LifecycleStatus,
+  Profile,
+  ProjectWithContext,
+} from "@/types/database";
 
 type HealthFilter = "all" | HealthStatus | "missing";
 type FreshnessFilter = "all" | "fresh" | "stale" | "missing";
 
+const LIFECYCLE_STATUSES: LifecycleStatus[] = [
+  "proposed",
+  "active",
+  "on_hold",
+  "complete",
+  "cancelled",
+];
+
 interface ProjectTableProps {
   projects: ProjectWithContext[];
-  leads: Profile[];
+  owners: Profile[];
 }
 
-export function ProjectTable({ projects, leads }: ProjectTableProps) {
+export function ProjectTable({ projects, owners }: ProjectTableProps) {
   const [health, setHealth] = useState<HealthFilter>("all");
   const [freshness, setFreshness] = useState<FreshnessFilter>("all");
-  const [leadId, setLeadId] = useState<string>("all");
+  const [ownerId, setOwnerId] = useState<string>("all");
+  const [lifecycleStatuses, setLifecycleStatuses] = useState<
+    Set<LifecycleStatus>
+  >(() => new Set(["proposed", "active", "on_hold"]));
 
   const filtered = useMemo(() => {
     return projects.filter((project) => {
       const update = project.currentUpdate;
       const submitted = update?.status === "submitted";
       const effectiveHealth = submitted ? update.health : project.current_health;
+
+      if (!lifecycleStatuses.has(project.lifecycle_status)) return false;
 
       if (health === "missing" && submitted) return false;
       if (health !== "all" && health !== "missing") {
@@ -62,11 +89,11 @@ export function ProjectTable({ projects, leads }: ProjectTableProps) {
         if (!submitted || !isStale(update.submitted_at)) return false;
       }
 
-      if (leadId !== "all" && project.lead_profile_id !== leadId) return false;
+      if (ownerId !== "all" && project.owner_profile_id !== ownerId) return false;
 
       return true;
     });
-  }, [projects, health, freshness, leadId]);
+  }, [projects, lifecycleStatuses, health, freshness, ownerId]);
 
   const healthChips: { value: HealthFilter; label: string }[] = [
     { value: "all", label: "All" },
@@ -76,14 +103,26 @@ export function ProjectTable({ projects, leads }: ProjectTableProps) {
     { value: "missing", label: "No update" },
   ];
 
+  function toggleLifecycleStatus(status: LifecycleStatus, checked: boolean) {
+    setLifecycleStatuses((current) => {
+      const next = new Set(current);
+      if (checked) {
+        next.add(status);
+      } else {
+        next.delete(status);
+      }
+      return next;
+    });
+  }
+
   return (
     <section aria-labelledby="all-projects-heading">
-      <div className="mb-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="mb-3 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <h2 id="all-projects-heading" className="text-lg font-bold">
           All projects
         </h2>
 
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
           <div
             className="flex flex-wrap gap-1.5"
             role="group"
@@ -108,7 +147,36 @@ export function ProjectTable({ projects, leads }: ProjectTableProps) {
             ))}
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-[150px] justify-between"
+                  aria-label={`Filter by project status; ${lifecycleStatuses.size} selected`}
+                >
+                  Status ({lifecycleStatuses.size})
+                  <ChevronDown className="size-4 opacity-50" aria-hidden />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-[190px]">
+                <DropdownMenuLabel>Project status</DropdownMenuLabel>
+                {LIFECYCLE_STATUSES.map((status) => (
+                  <DropdownMenuCheckboxItem
+                    key={status}
+                    checked={lifecycleStatuses.has(status)}
+                    onCheckedChange={(checked) =>
+                      toggleLifecycleStatus(status, checked === true)
+                    }
+                    onSelect={(event) => event.preventDefault()}
+                  >
+                    {LIFECYCLE_LABEL[status]}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <Select
               value={freshness}
               onValueChange={(value) => setFreshness(value as FreshnessFilter)}
@@ -127,16 +195,19 @@ export function ProjectTable({ projects, leads }: ProjectTableProps) {
               </SelectContent>
             </Select>
 
-            {leads.length > 0 ? (
-              <Select value={leadId} onValueChange={setLeadId}>
-                <SelectTrigger className="w-[150px]" aria-label="Filter by lead">
+            {owners.length > 0 ? (
+              <Select value={ownerId} onValueChange={setOwnerId}>
+                <SelectTrigger
+                  className="w-[150px]"
+                  aria-label="Filter by project owner"
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Any lead</SelectItem>
-                  {leads.map((lead) => (
-                    <SelectItem key={lead.id} value={lead.id}>
-                      {lead.display_name}
+                  <SelectItem value="all">Any owner</SelectItem>
+                  {owners.map((owner) => (
+                    <SelectItem key={owner.id} value={owner.id}>
+                      {owner.display_name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -150,14 +221,23 @@ export function ProjectTable({ projects, leads }: ProjectTableProps) {
         <Table>
           <TableHeader>
             <TableRow className="bg-secondary hover:bg-secondary">
-              <TableHead className="text-[0.6875rem] font-bold tracking-wide uppercase">
+              <TableHead className="min-w-[180px] text-[0.6875rem] font-bold tracking-wide uppercase">
                 Project
+              </TableHead>
+              <TableHead className="min-w-[220px] text-[0.6875rem] font-bold tracking-wide uppercase">
+                Expected value
+              </TableHead>
+              <TableHead className="min-w-[260px] text-[0.6875rem] font-bold tracking-wide uppercase">
+                Executive summary
               </TableHead>
               <TableHead className="text-[0.6875rem] font-bold tracking-wide uppercase">
                 Owner
               </TableHead>
               <TableHead className="text-[0.6875rem] font-bold tracking-wide uppercase">
                 Health
+              </TableHead>
+              <TableHead className="text-[0.6875rem] font-bold tracking-wide uppercase">
+                Impact
               </TableHead>
               <TableHead className="text-[0.6875rem] font-bold tracking-wide uppercase">
                 Next milestone
@@ -174,7 +254,7 @@ export function ProjectTable({ projects, leads }: ProjectTableProps) {
             {filtered.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={9}
                   className="py-12 text-center text-sm text-muted-foreground"
                 >
                   No projects match these filters.
@@ -191,17 +271,19 @@ export function ProjectTable({ projects, leads }: ProjectTableProps) {
 
                 return (
                   <TableRow key={project.id}>
-                    <TableCell className="align-top">
+                    <TableCell className="max-w-[40ch] whitespace-normal align-top">
                       <Link
                         href={`/projects/${project.id}`}
-                        className="font-semibold text-foreground hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        className="inline-block max-w-[40ch] whitespace-normal [overflow-wrap:anywhere] font-semibold text-foreground hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       >
                         {project.name}
                       </Link>
-                      <span className="mt-1 block text-[0.6875rem] text-muted-foreground">
-                        {project.description?.split("—")[0]?.trim() ||
-                          "CMO Digital"}
-                      </span>
+                    </TableCell>
+                    <TableCell className="max-w-[320px] whitespace-normal align-top text-sm leading-5 text-muted-foreground">
+                      {project.expected_value || "—"}
+                    </TableCell>
+                    <TableCell className="max-w-[360px] whitespace-normal align-top text-sm leading-5 text-muted-foreground">
+                      {project.executive_summary || "—"}
                     </TableCell>
                     <TableCell className="align-top text-sm">
                       {project.owner?.display_name ?? "Unassigned"}
@@ -221,6 +303,11 @@ export function ProjectTable({ projects, leads }: ProjectTableProps) {
                           Update missing
                         </span>
                       ) : null}
+                    </TableCell>
+                    <TableCell className="align-top text-sm">
+                      {submitted && update.impact
+                        ? IMPACT_LABEL[update.impact]
+                        : "—"}
                     </TableCell>
                     <TableCell className="align-top text-sm">
                       {project.nextMilestone?.name ?? "—"}

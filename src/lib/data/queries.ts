@@ -8,6 +8,8 @@ import type {
   Milestone,
   Portfolio,
   Profile,
+  ProfileContact,
+  ProfileDeletionEligibility,
   Project,
   ProjectUpdate,
   ProjectWithContext,
@@ -52,6 +54,7 @@ export async function getSessionContext(): Promise<SessionContext | null> {
     .from("profiles")
     .select("*")
     .eq("auth_user_id", user.id)
+    .eq("active", true)
     .maybeSingle();
 
   if (error) {
@@ -62,7 +65,7 @@ export async function getSessionContext(): Promise<SessionContext | null> {
 
   if (!profile) {
     throw new SessionUnavailableError(
-      "Your account is signed in, but it is not linked to a roster entry yet.",
+      "Your account is signed in, but it is not linked to an active roster entry.",
     );
   }
 
@@ -141,6 +144,52 @@ export async function getProfiles(): Promise<Profile[]> {
     .select("*")
     .order("display_name");
   return (data ?? []) as Profile[];
+}
+
+/**
+ * Database-derived roster deletion checks for the admin screen.
+ *
+ * An empty map keeps deletion unavailable until the supporting migration has
+ * been applied; the destructive control must never guess from partial client
+ * data.
+ */
+export async function getProfileDeletionEligibility(): Promise<
+  Record<string, ProfileDeletionEligibility>
+> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc(
+    "get_profile_deletion_eligibility",
+  );
+  if (error) return {};
+
+  const eligibility: Record<string, ProfileDeletionEligibility> = {};
+  for (const row of (data ?? []) as ProfileDeletionEligibility[]) {
+    eligibility[row.profile_id] = {
+      ...row,
+      blockers: Array.isArray(row.blockers) ? row.blockers : [],
+      reference_count: Number(row.reference_count),
+    };
+  }
+  return eligibility;
+}
+
+/**
+ * Verified corporate emails for roster members.
+ *
+ * RLS returns nothing to owners, execs, and the preview identity — only leads
+ * and administrators see rows. Callers that do not manage reporting simply get
+ * an empty map.
+ */
+export async function getProfileContacts(): Promise<
+  Record<string, ProfileContact>
+> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("profile_contacts").select("*");
+  const contacts: Record<string, ProfileContact> = {};
+  for (const row of (data ?? []) as ProfileContact[]) {
+    contacts[row.profile_id] = row;
+  }
+  return contacts;
 }
 
 export async function getReportingCycles(): Promise<ReportingCycle[]> {
@@ -239,12 +288,14 @@ export interface PortfolioMetrics {
   blocked: number;
   reportingProjects: number;
   submittedCount: number;
+  currentSubmittedCount: number;
   completeness: number;
   missing: ProjectWithContext[];
+  readinessOutstanding: ProjectWithContext[];
   stale: ProjectWithContext[];
 }
 
-/** Dashboard aggregation — submitted updates only, per the acceptance criteria. */
+/** Dashboard aggregation — readiness requires a submitted, non-stale update. */
 export function buildPortfolioMetrics(
   projects: ProjectWithContext[],
 ): PortfolioMetrics {
@@ -253,6 +304,13 @@ export function buildPortfolioMetrics(
   );
   const submitted = reporting.filter(
     (p) => p.currentUpdate?.status === "submitted",
+  );
+  const stale = submitted.filter((p) =>
+    isStale(p.currentUpdate?.submitted_at ?? null),
+  );
+  const staleProjectIds = new Set(stale.map((project) => project.id));
+  const currentSubmitted = submitted.filter(
+    (project) => !staleProjectIds.has(project.id),
   );
 
   const healthOf = (project: ProjectWithContext) =>
@@ -268,11 +326,17 @@ export function buildPortfolioMetrics(
     blocked: reporting.filter((p) => healthOf(p) === "blocked").length,
     reportingProjects: reporting.length,
     submittedCount: submitted.length,
+    currentSubmittedCount: currentSubmitted.length,
     completeness: reporting.length
-      ? Math.round((submitted.length / reporting.length) * 100)
+      ? Math.round((currentSubmitted.length / reporting.length) * 100)
       : 0,
     missing: reporting.filter((p) => p.currentUpdate?.status !== "submitted"),
-    stale: submitted.filter((p) => isStale(p.currentUpdate?.submitted_at ?? null)),
+    readinessOutstanding: reporting.filter(
+      (project) =>
+        project.currentUpdate?.status !== "submitted" ||
+        staleProjectIds.has(project.id),
+    ),
+    stale,
   };
 }
 

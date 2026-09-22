@@ -6,6 +6,7 @@ export type LifecycleStatus =
   | "complete"
   | "cancelled";
 export type HealthStatus = "on_track" | "at_risk" | "blocked";
+export type ImpactLevel = "high" | "medium" | "low";
 export type ReportingCadence = "weekly" | "monthly";
 export type CycleStatus = "upcoming" | "open" | "locked" | "closed";
 export type UpdateStatus = "draft" | "submitted";
@@ -30,6 +31,26 @@ export interface Profile {
   updated_at: string;
 }
 
+/**
+ * Verified corporate email for a roster member.
+ *
+ * Lives off `profiles` on purpose: the roster is broadly readable (including by
+ * the shared preview identity), while contact addresses are lead/admin-only.
+ */
+export interface ProfileContact {
+  profile_id: string;
+  email: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProfileDeletionEligibility {
+  profile_id: string;
+  can_delete: boolean;
+  blockers: string[];
+  reference_count: number;
+}
+
 export interface Portfolio {
   id: string;
   name: string;
@@ -40,7 +61,8 @@ export interface Portfolio {
 export interface Project {
   id: string;
   name: string;
-  description: string | null;
+  executive_summary: string | null;
+  expected_value: string | null;
   portfolio_id: string;
   owner_profile_id: string | null;
   lead_profile_id: string | null;
@@ -77,7 +99,7 @@ export interface ProjectUpdate {
   reporting_cycle_id: string;
   author_profile_id: string | null;
   health: HealthStatus;
-  executive_summary: string;
+  impact: ImpactLevel | null;
   accomplishments: string | null;
   next_steps: string | null;
   blocker_or_risk: string | null;

@@ -7,6 +7,7 @@ const requiredText = (label: string, min = 1) =>
     .min(min, `${label} is required.`);
 
 export const healthValues = ["on_track", "at_risk", "blocked"] as const;
+export const impactValues = ["high", "medium", "low"] as const;
 
 /**
  * Weekly update schema. Validation tightens with health:
@@ -20,7 +21,7 @@ export const projectUpdateSchema = z
     projectId: z.string().uuid("Select a project."),
     reportingCycleId: z.string().uuid("Select a reporting period."),
     health: z.enum(healthValues),
-    executiveSummary: requiredText("Executive summary", 20).max(1200),
+    impact: z.enum(impactValues).optional().or(z.literal("")),
     accomplishments: z.string().trim().max(2000).optional().or(z.literal("")),
     nextSteps: z.string().trim().max(2000).optional().or(z.literal("")),
     blockerOrRisk: z.string().trim().max(1000).optional().or(z.literal("")),
@@ -123,7 +124,8 @@ const optionalUuid = z.string().uuid().nullable().optional();
 export const projectSchema = z.object({
   id: optionalUuid,
   name: requiredText("Project name", 3).max(200),
-  description: z.string().trim().max(1000).optional().or(z.literal("")),
+  executiveSummary: requiredText("Executive summary", 20).max(1200),
+  expectedValue: z.string().trim().max(1200).optional().or(z.literal("")),
   portfolioId: z.string().uuid("Select a portfolio."),
   ownerProfileId: optionalUuid,
   leadProfileId: optionalUuid,
@@ -141,6 +143,31 @@ export const profileRoleSchema = z.object({
   id: z.string().uuid(),
   role: z.enum(["owner", "lead", "exec", "admin"]),
   active: z.boolean(),
+});
+
+export const deleteInactiveProfileSchema = z.object({
+  id: z.string().uuid("Select a person."),
+});
+
+/**
+ * Corporate contact email. Kept separate from the NTID-derived auth address —
+ * this is the real mailbox a lead opens when reminding an owner.
+ */
+export const contactEmailSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(5, "Enter a corporate email address.")
+  .max(254, "That email address looks too long.")
+  .email("Enter a valid email address.")
+  .regex(
+    /^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$/,
+    "Enter a valid email address.",
+  );
+
+export const profileContactSchema = z.object({
+  profileId: z.string().uuid("Select a person."),
+  email: contactEmailSchema,
 });
 
 export const cycleSchema = z
@@ -170,3 +197,7 @@ export const cycleSchema = z
       });
     }
   });
+
+export const deleteCycleSchema = z.object({
+  id: z.string().uuid("Select a reporting cycle."),
+});

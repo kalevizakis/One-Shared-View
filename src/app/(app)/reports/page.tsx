@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CyclePicker } from "@/components/portfolio/cycle-picker";
 import { ReportBuilder } from "@/components/reports/report-builder";
@@ -12,7 +13,7 @@ import {
   getReportsForCycle,
   getSessionContext,
 } from "@/lib/data/queries";
-import { canManageReporting } from "@/lib/domain/status";
+import { canManageReporting, canViewReports } from "@/lib/domain/status";
 
 interface PageProps {
   searchParams: Promise<{ cycle?: string; report?: string }>;
@@ -30,6 +31,7 @@ async function Reports({ searchParams }: PageProps) {
   const { cycle: cycleParam, report: reportParam } = await searchParams;
   const session = await getSessionContext();
   if (!session) return null;
+  if (!canViewReports(session.profile.role)) redirect("/");
 
   const [cycles, cycle] = await Promise.all([
     getReportingCycles(),

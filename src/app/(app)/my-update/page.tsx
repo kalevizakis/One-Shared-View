@@ -13,7 +13,11 @@ import {
   getSessionContext,
   getUpdateForCycle,
 } from "@/lib/data/queries";
-import { CYCLE_STATUS_LABEL, canEditProject } from "@/lib/domain/status";
+import {
+  CYCLE_STATUS_LABEL,
+  canEditProject,
+  canViewReports,
+} from "@/lib/domain/status";
 
 interface PageProps {
   searchParams: Promise<{ cycle?: string; project?: string }>;
@@ -133,6 +137,7 @@ async function MyUpdate({ searchParams }: PageProps) {
       ) : null}
 
       <UpdateForm
+        key={`${cycle.id}:${selectedProject.id}`}
         projects={visible}
         cycle={cycle}
         people={people.filter((person) => person.active)}
@@ -140,6 +145,7 @@ async function MyUpdate({ searchParams }: PageProps) {
         existingUpdate={existingUpdate}
         nextMilestone={nextMilestone}
         readOnly={!canEdit || cycleLocked}
+        reportsAvailable={canViewReports(role)}
       />
     </div>
   );

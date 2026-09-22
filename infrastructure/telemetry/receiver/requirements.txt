@@ -1,0 +1,6 @@
+flask==3.1.*
+psycopg2-binary==2.9.*
+requests==2.32.*
+opentelemetry-proto==1.30.*
+protobuf==5.29.*
+gunicorn==23.0.*

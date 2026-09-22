@@ -1,6 +1,7 @@
 import type {
   CycleStatus,
   HealthStatus,
+  ImpactLevel,
   LifecycleStatus,
   MilestoneStatus,
   UpdateStatus,
@@ -18,6 +19,12 @@ export const HEALTH_LABEL: Record<HealthStatus, string> = {
 };
 
 export const HEALTH_ORDER: HealthStatus[] = ["blocked", "at_risk", "on_track"];
+
+export const IMPACT_LABEL: Record<ImpactLevel, string> = {
+  high: "High",
+  medium: "Medium",
+  low: "Low",
+};
 
 export const LIFECYCLE_LABEL: Record<LifecycleStatus, string> = {
   proposed: "Proposed",
@@ -184,6 +191,10 @@ export function canEditProject(
 
 export function canManageReporting(role: UserRole): boolean {
   return role === "lead" || role === "admin";
+}
+
+export function canViewReports(role: UserRole): boolean {
+  return role === "lead" || role === "exec" || role === "admin";
 }
 
 export function canAdminister(role: UserRole): boolean {

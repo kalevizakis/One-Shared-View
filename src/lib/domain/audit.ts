@@ -18,6 +18,7 @@ export const ENTITY_LABELS: Record<string, string> = {
   project_updates: "Weekly updates",
   projects: "Projects",
   profiles: "People and roles",
+  profile_contacts: "Contact emails",
   reporting_cycles: "Reporting cycles",
   generated_reports: "Leadership reports",
   decisions: "Decisions",

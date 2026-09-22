@@ -4,6 +4,8 @@ import { ProjectAdmin } from "@/components/admin/project-admin";
 import { PeopleAdmin } from "@/components/admin/people-admin";
 import { CycleAdmin } from "@/components/admin/cycle-admin";
 import {
+  getProfileDeletionEligibility,
+  getProfileContacts,
   getProfiles,
   getProjectsWithContext,
   getReportingCycles,
@@ -28,11 +30,14 @@ export default async function AdminPage() {
     );
   }
 
-  const [projects, people, cycles] = await Promise.all([
-    getProjectsWithContext(null),
-    getProfiles(),
-    getReportingCycles(),
-  ]);
+  const [projects, people, cycles, contacts, profileDeletionEligibility] =
+    await Promise.all([
+      getProjectsWithContext(null),
+      getProfiles(),
+      getReportingCycles(),
+      getProfileContacts(),
+      getProfileDeletionEligibility(),
+    ]);
 
   return (
     <div className="space-y-6">
@@ -65,7 +70,12 @@ export default async function AdminPage() {
         </TabsContent>
 
         <TabsContent value="people" className="mt-5">
-          <PeopleAdmin people={people} currentProfileId={session.profile.id} />
+          <PeopleAdmin
+            people={people}
+            contacts={contacts}
+            currentProfileId={session.profile.id}
+            deletionEligibility={profileDeletionEligibility}
+          />
         </TabsContent>
 
         <TabsContent value="cycles" className="mt-5">

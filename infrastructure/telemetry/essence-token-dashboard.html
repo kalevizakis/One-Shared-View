@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESSENCE Token Dashboard</title>
+  <style>
+    :root {
+      --bg: #161d29;
+      --card: #232c3a;
+      --border: #3a4252;
+      --text: #e6edf3;
+      --text-dim: #8b949e;
+      --accent: #58a6ff;
+      --green: #3fb950;
+      --orange: #d29922;
+      --red: #f85149;
+      --purple: #bc8cff;
+      --cyan: #39d2c0;
+      --pink: #f778ba;
+      --yellow: #e3b341;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px;
+      line-height: 1.5;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header .logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 18px;
+    }
+
+    .header .meta {
+      text-align: left;
+      color: var(--text-dim);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .header .meta .live {
+      font-weight: 600;
+    }
+
+    .header .meta .live.ok {
+      color: var(--green);
+    }
+
+    .header .meta .live.offline {
+      color: var(--text-dim);
+    }
+
+    .header .meta .meta-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-dim);
+      margin-right: 6px;
+    }
+
+    .header .meta .meta-value {
+      color: var(--text);
+    }
+
+    .header .meta .meta-badge {
+      background: rgba(63, 185, 80, 0.15);
+      color: var(--green);
+      padding: 1px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-left: 6px;
+    }
+
+    .period-filter {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .workspace-filter-row {
+      margin-top: 6px;
+    }
+
+    .workspace-filter-row .ws-filter {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .period-filter .period-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-dim);
+      margin-right: 4px;
+    }
+
+    .period-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: var(--text);
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .period-btn:hover {
+      background: rgba(88, 166, 255, 0.15);
+      color: var(--blue);
+      border-color: rgba(88, 166, 255, 0.4);
+    }
+
+    .period-btn.active {
+      background: rgba(88, 166, 255, 0.25);
+      color: var(--blue);
+      border-color: var(--blue);
+      font-weight: 600;
+    }
+
+    .ws-filter {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: var(--text);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      cursor: pointer;
+      font-family: inherit;
+      max-width: 220px;
+    }
+
+    .ws-filter:hover {
+      border-color: rgba(88, 166, 255, 0.4);
+    }
+
+    .ws-filter:focus {
+      outline: none;
+      border-color: var(--blue);
+    }
+
+    .ws-filter option {
+      background: var(--card);
+      color: var(--text);
+    }
+
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .kpi {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .kpi .label {
+      font-size: 11px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .kpi .value {
+      font-size: 24px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .kpi .sub {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    .kpi.green .value {
+      color: var(--green);
+    }
+
+    .kpi.accent .value {
+      color: var(--accent);
+    }
+
+    .kpi.orange .value {
+      color: var(--orange);
+    }
+
+    .kpi.purple .value {
+      color: var(--purple);
+    }
+
+    .kpi.cyan .value {
+      color: var(--cyan);
+    }
+
+    .kpi.pink .value {
+      color: var(--pink);
+    }
+
+    .kpi.yellow .value {
+      color: var(--yellow);
+    }
+
+    .kpi.red .value {
+      color: var(--red);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .grid-3eq {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .grid-2-1 {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      min-width: 0;
+      overflow-x: auto;
+    }
+
+    .panel h2 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel h2 .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .dot.blue {
+      background: var(--accent);
+    }
+
+    .dot.green {
+      background: var(--green);
+    }
+
+    .dot.orange {
+      background: var(--orange);
+    }
+
+    .dot.purple {
+      background: var(--purple);
+    }
+
+    .dot.cyan {
+      background: var(--cyan);
+    }
+
+    .dot.pink {
+      background: var(--pink);
+    }
+
+    .dot.yellow {
+      background: var(--yellow);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      table-layout: auto;
+    }
+
+    th {
+      text-align: left;
+      color: var(--text-dim);
+      font-weight: 500;
+      padding: 6px 6px;
+      border-bottom: 1px solid var(--border);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    th.r,
+    td.r {
+      text-align: right;
+    }
+
+    td {
+      padding: 6px 6px;
+      border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+      font-variant-numeric: tabular-nums;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: rgba(88, 166, 255, 0.04);
+    }
+
+    .total-row td {
+      border-top: 2px solid var(--border);
+      font-weight: 600;
+    }
+
+    .model-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .model-tag.opus {
+      background: rgba(188, 140, 255, 0.15);
+      color: var(--purple);
+    }
+
+    .model-tag.mini {
+      background: rgba(57, 210, 192, 0.15);
+      color: var(--cyan);
+    }
+
+    .model-tag.embed {
+      background: rgba(247, 120, 186, 0.15);
+      color: var(--pink);
+    }
+
+    .agent-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(88, 166, 255, 0.12);
+      color: var(--accent);
+    }
+
+    .bar-container {
+      height: 8px;
+      background: rgba(48, 54, 61, 0.8);
+      border-radius: 4px;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+    }
+
+    .bar-cached {
+      background: var(--green);
+    }
+
+    .bar-new {
+      background: var(--orange);
+    }
+
+    .bar-output {
+      background: var(--accent);
+    }
+
+    .bar-create {
+      background: var(--yellow);
+    }
+
+    .cache-ring {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 10px;
+      position: relative;
+    }
+
+    .cache-ring svg {
+      transform: rotate(-90deg);
+    }
+
+    .cache-ring .center-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .cache-ring .center-text .big {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    .cache-ring .center-text .small {
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .timeline-bar {
+      display: flex;
+      align-items: end;
+      gap: 3px;
+      height: 100px;
+      padding-top: 8px;
+    }
+
+    .timeline-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+    }
+
+    .timeline-col .bar {
+      width: 100%;
+      min-width: 12px;
+      border-radius: 3px 3px 0 0;
+    }
+
+    .timeline-col .lbl {
+      font-size: 9px;
+      color: var(--text-dim);
+      margin-top: 3px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 14px;
+      margin-top: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .legend-item .swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 24px 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title::before {
+      content: '';
+      display: block;
+      width: 3px;
+      height: 14px;
+      border-radius: 2px;
+    }
+
+    .section-title.tokens::before {
+      background: var(--accent);
+    }
+
+    .section-title.cost::before {
+      background: var(--yellow);
+    }
+
+    .section-title.perf::before {
+      background: var(--cyan);
+    }
+
+    .section-title.detail::before {
+      background: var(--purple);
+    }
+
+    .footer {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 12px;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    code {
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 12px;
+    }
+
+    /* Collapsible panels */
+    /* Refresh button */
+    .refresh-btn {
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .refresh-btn:hover {
+      opacity: 0.9;
+    }
+
+    .refresh-btn:active {
+      transform: scale(0.97);
+    }
+
+    .refresh-btn.loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .refresh-btn .spin {
+      display: inline-block;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .refresh-toast {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    .refresh-toast.show {
+      opacity: 1;
+    }
+
+    .refresh-toast.success {
+      background: var(--green);
+      color: #fff;
+    }
+
+    .refresh-toast.error {
+      background: var(--red);
+      color: #fff;
+    }
+
+    @media (max-width: 900px) {
+
+      .grid-2,
+      .grid-3,
+      .grid-2-1,
+      .grid-3eq {
+        grid-template-columns: 1fr;
+      }
+
+      .kpi-row {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    /* Tab Navigation */
+    .tab-nav {
+      display: flex;
+      gap: 0;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab-nav button {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color 0.2s, border-color 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .tab-nav button:hover {
+      color: var(--text);
+    }
+
+    .tab-nav button.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .session-banner {
+      font-size: 14px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(57, 210, 192, 0.15);
+      background: rgba(57, 210, 192, 0.04);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .session-banner strong {
+      color: var(--cyan);
+      font-size: 20px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .session-banner .session-count {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .session-banner .session-turns {
+      font-size: 11px;
+      color: var(--text-dim);
+      opacity: 0.7;
+    }
+
+    /* Over threshold — red state */
+    .session-banner.over {
+      border-color: rgba(248, 81, 73, 0.3);
+      background: rgba(248, 81, 73, 0.06);
+    }
+
+    .session-banner.over strong {
+      color: var(--red);
+    }
+
+    .session-banner.over .session-cta {
+      display: block;
+      width: 100%;
+      text-align: center;
+      font-size: 12px;
+      color: var(--red);
+      font-weight: 500;
+      text-transform: none;
+      letter-spacing: 0;
+      margin-top: 2px;
+    }
+
+    .tab-pane {
+      display: none;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    <h1>
+      <div class="logo">E</div> ESSENCE Token Dashboard <span
+        style="font-size:0.45em;font-weight:400;opacity:0.7;vertical-align:middle;margin-left:8px;background:rgba(255,255,255,0.1);padding:2px 8px;border-radius:4px;">v2.5.1</span>
+    </h1>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <button class="refresh-btn" onclick="triggerUpdate()"
+        title="Run update-dashboard.py to refresh data from PostgreSQL">
+        <span id="refreshIcon">&#x21bb;</span> Refresh Data
+      </button>
+      <div class="meta">
+        <div class="live" id="pipelineStatus">● Checking… <span id="lastUpdated"
+            style="font-weight:400;opacity:0.7;font-size:12px;color:#ffffff;">(Aug 07, 2026 · 11:46:51)</span></div>
+        <div><span class="meta-label">Data Window</span> <span class="meta-value">May 22, 10:19 → Jun 05, 11:23</span>
+          <span class="meta-badge">14d 1h 04m</span>
+        </div>
+        <div class="period-filter">
+          <span class="period-label">Period</span>
+          <button class="period-btn" data-period="24h" onclick="filterPeriod('24h')">24H</button>
+          <button class="period-btn" data-period="1w" onclick="filterPeriod('1w')">1 Week</button>
+          <button class="period-btn" data-period="1m" onclick="filterPeriod('1m')">1 Month</button>
+          <button class="period-btn" data-period="3m" onclick="filterPeriod('3m')">3 Months</button>
+          <button class="period-btn" data-period="6m" onclick="filterPeriod('6m')">6 Months</button>
+          <button class="period-btn active" data-period="all" onclick="filterPeriod('all')">All</button>
+        </div>
+        <div class="period-filter workspace-filter-row">
+          <label class="period-label" for="workspaceFilter">Workspace</label>
+          <select id="workspaceFilter" class="ws-filter" onchange="filterWorkspace(this.value)"><option value="all" selected>All workspaces</option></select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scope Note -->
+  <div
+    style="margin:12px 0 4px 0;padding:8px 16px;background:rgba(255,255,255,0.06);border-left:3px solid rgba(0,200,255,0.4);border-radius:4px;font-size:0.82em;color:rgba(255,255,255,0.55);display:flex;align-items:center;gap:8px;">
+    <span style="font-size:1.1em;">ℹ️</span>
+    <span>This dashboard aggregates token usage <strong style="color:rgba(255,255,255,0.75);">across all workspaces and
+        projects</strong> in your VS Code instance. Use the <strong style="color:rgba(255,255,255,0.75);">Workspace
+        filter</strong> above to narrow the view to a single workspace.</span>
+  </div>
+
+  <!-- KPIs -->
+        <div class="kpi-row">
+    <div class="kpi accent">
+      <div class="label">1. Total Tokens</div>
+      <div class="value">0</div>
+      <div class="sub">input + output</div>
+    </div>
+    <div class="kpi green">
+      <div class="label">2. Cache Hit Rate</div>
+      <div class="value">0.0%</div>
+      <div class="sub">of input tokens cached</div>
+    </div>
+    <div class="kpi orange">
+      <div class="label">3. Total Input</div>
+      <div class="value">0</div>
+      <div class="sub">all input tokens</div>
+    </div>
+    <div class="kpi cyan">
+      <div class="label">4. Cached Tokens</div>
+      <div class="value">0</div>
+      <div class="sub">prompt cache hits</div>
+    </div>
+    <div class="kpi red">
+      <div class="label">5. Output Tokens</div>
+      <div class="value">0</div>
+      <div class="sub">all output tokens</div>
+    </div>
+    <div class="kpi yellow">
+      <div class="label">6. Copilot Credits</div>
+      <div class="value">—</div>
+      <div class="sub">Copilot picker rates</div>
+    </div>
+    <div class="kpi purple">
+      <div class="label">7. LLM Calls</div>
+      <div class="value">0</div>
+      <div class="sub">0 agent turns</div>
+    </div>
+    <div class="kpi pink">
+      <div class="label">8. Wall Clock</div>
+      <div class="value">0m</div>
+      <div class="sub">first → last</div>
+    </div>
+  </div>
+
+  <!-- COST SECTION -->
+
+  <!-- TAB NAVIGATION -->
+  <div class="tab-nav">
+    <button class="active" onclick="switchTab('health')" id="btn-health">Cost &amp; Efficiency</button>
+    <button onclick="switchTab('analysis')" id="btn-analysis">Trends &amp; Performance</button>
+  </div>
+
+  <!-- TAB 1: HEALTH -->
+  <div class="tab-pane active" id="tab-health">
+                <div class="session-banner " style="position:relative;">
+      <span class="session-count">Current Session — <strong id="session-span-count">0</strong> spans</span>
+      <span class="session-cta"></span>
+    </div>
+    <div class="panel">
+      <h2><span class="dot yellow"></span> V16 — Cost per Workspace</h2>
+<div style="color:var(--text-dim);">No data in the selected period.</div>
+    </div>
+    <div class="panel">
+      <h2><span class="dot green"></span> V1 — Usage Insights</h2>
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1 1 0%;min-width:0;padding:10px 12px;background:rgba(255,255,255,0.02);border-left:3px solid var(--green);border-radius:0 4px 4px 0;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+            <span style="font-size:14px;">🟢</span>
+            <span style="font-size:12px;font-weight:600;color:var(--green);">OK</span>
+            <span style="font-size:12px;color:var(--text);font-weight:500;">A. No Issues Detected</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-dim);line-height:1.5;overflow-wrap:break-word;">Token consumption patterns look healthy.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2><span class="dot purple"></span> V9 — Efficiency</h2>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+          <div style="padding:10px;background:rgba(88,166,255,0.06);border-radius:8px;">
+            <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">OUTPUT / INPUT RATIO</div>
+            <div style="font-size:22px;font-weight:700;color:var(--accent);">0.00%</div>
+            <div style="font-size:11px;color:var(--text-dim);">0 out / 0 in tokens</div>
+          </div>
+          <div style="padding:10px;background:rgba(57,210,192,0.06);border-radius:8px;">
+            <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">OUTPUT PER TOOL CALL</div>
+            <div style="font-size:22px;font-weight:700;color:var(--cyan);">0 <span style="font-size:11px;font-weight:400;color:var(--text-dim);">tokens</span></div>
+            <div style="font-size:11px;color:var(--text-dim);">0 tokens / 0 tools</div>
+          </div>
+          <div style="padding:10px;background:rgba(188,140,255,0.06);border-radius:8px;">
+            <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">AVG INPUT PER CALL</div>
+            <div style="font-size:22px;font-weight:700;color:var(--purple);">0 <span style="font-size:11px;font-weight:400;color:var(--text-dim);">tokens</span></div>
+            <div style="font-size:11px;color:var(--text-dim);">across 0 LLM calls</div>
+          </div>
+        </div>
+    </div>
+
+    <div class="section-title cost">Cost Overview</div>
+    <div class="grid-3eq">
+      <div class="panel">
+        <h2><span class="dot yellow"></span> V4 — Cost by Model</h2>
+      <table>
+        <tr><th>Model</th><th class="r">Total Cr</th><th class="r">Input Cr</th><th class="r">Cached Cr</th><th class="r">Output Cr</th></tr>
+        <tr class="total-row">
+          <td>Total</td>
+          <td class="r" style="color:var(--yellow);"><strong>—</strong></td>
+          <td class="r"><strong>—</strong><div style="font-size:10px;color:var(--text-dim);margin-top:1px;">0 non-cached</div></td>
+          <td class="r" style="color:var(--green);"><strong>—</strong><div style="font-size:10px;color:var(--text-dim);margin-top:1px;">0 cached</div></td>
+          <td class="r"><strong>—</strong><div style="font-size:10px;color:var(--text-dim);margin-top:1px;">0 output</div></td>
+        </tr>
+      </table>
+      <div style="font-size:10px;color:var(--text-dim);margin-top:8px;">* GitHub Copilot credits per 1M tokens — see DASHBOARD_COST_SOURCE.md</div>
+    </div>
+      <div class="panel">
+        <h2><span class="dot green"></span> V5 — Cache Efficiency</h2>
+      <div style="text-align:center;padding:16px 0;">
+        <div class="cache-ring">
+          <svg viewBox="0 0 120 120" width="120" height="120">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--border)" stroke-width="10" />
+            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--red)" stroke-width="10"
+              stroke-dasharray="0.0 314.16" stroke-linecap="round" />
+          </svg>
+          <div class="center-text">
+            <div class="big" style="font-size:16px;color:var(--red);">0.0%</div>
+            <div class="small">cache<br>hit rate</div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text-dim);line-height:1.8;">
+          <div>Total input: <strong style="color:var(--accent);">0</strong></div>
+          <div>Total cached: <strong style="color:var(--green);">0</strong></div>
+          <div>Total output: <strong style="color:var(--red);">0</strong></div>
+        </div>
+      </div>
+    </div>
+      <div class="panel">
+        <h2><span class="dot orange"></span> V6 — Token Composition</h2>
+
+      <div style="display:flex;gap:14px;font-size:10px;color:var(--text-dim);margin-top:8px;">
+        <span>■ cached</span>
+        <span style="color:var(--orange);">■ cache write</span>
+        <span style="color:var(--accent);">■ new input</span>
+        <span style="color:var(--red);">■ output</span>
+      </div>
+    </div>
+    </div>
+
+    <div class="panel">
+      <h2><span class="dot blue"></span> V8 — Token Breakdown by Model</h2>
+      <table>
+        <tr><th>Model</th><th class="r">Calls</th><th class="r">Input</th><th class="r">Output</th>
+          <th class="r">Cached</th><th class="r">Cache %</th><th class="r">Cache Write</th>
+          <th class="r">Avg TTFT</th><th class="r">Credits</th></tr>
+        <tr class="total-row">
+          <td>Total</td>
+          <td class="r"><strong>0</strong></td>
+          <td class="r"><strong>0</strong></td>
+          <td class="r"><strong>0</strong></td>
+          <td class="r"><strong>0</strong></td>
+          <td class="r"><strong>0.0%</strong></td>
+          <td class="r"><strong>0</strong></td>
+          <td class="r">—</td>
+          <td class="r" style="color:var(--yellow);"><strong>—</strong></td>
+        </tr>
+      </table>
+      <div style="font-size:10px;color:var(--text-dim);margin-top:8px;">* GitHub Copilot credits per 1M tokens — see DASHBOARD_COST_SOURCE.md</div>
+    </div>
+
+    <div class="panel">
+      <h2><span class="dot green"></span> V14b — Workspace and Agent Context</h2>
+<div style="color:var(--text-dim);">No <code style="color:var(--cyan);">github.copilot.*</code> attributes in the selected period. These are emitted by VS Code 1.122+ (legacy <code>copilot_chat.*</code> spans carry no repo/agent context).</div>
+    </div>
+
+
+  </div>
+
+  <!-- TAB 2: ANALYSIS -->
+  <div class="tab-pane" id="tab-analysis">
+    <div class="panel">
+      <h2><span class="dot green"></span> V11 — Cumulative Tokens &amp; Cost</h2>
+<div style="color:var(--text-dim);">No data</div>
+    </div>
+    <div class="grid-2">
+      <div class="panel">
+        <h2><span class="dot red"></span> V2 — Session Length Impact</h2>
+        <div style="margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <span style="font-size:12px;font-weight:600;color:var(--green);">1-5 spans</span>
+            <span style="font-size:11px;color:var(--text-dim);">0 sessions · 0% of input</span>
+          </div>
+          <div class="bar-container" style="height:14px;">
+            <div class="bar-fill" style="width:0%;background:var(--green);border-radius:3px;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);margin-top:2px;">
+            <span>Input: 0</span>
+            <span>Billable: 0</span>
+            <span style="color:var(--yellow);">—</span>
+          </div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <span style="font-size:12px;font-weight:600;color:var(--accent);">6-15 spans</span>
+            <span style="font-size:11px;color:var(--text-dim);">0 sessions · 0% of input</span>
+          </div>
+          <div class="bar-container" style="height:14px;">
+            <div class="bar-fill" style="width:0%;background:var(--accent);border-radius:3px;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);margin-top:2px;">
+            <span>Input: 0</span>
+            <span>Billable: 0</span>
+            <span style="color:var(--yellow);">—</span>
+          </div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <span style="font-size:12px;font-weight:600;color:var(--orange);">16-30 spans</span>
+            <span style="font-size:11px;color:var(--text-dim);">0 sessions · 0% of input</span>
+          </div>
+          <div class="bar-container" style="height:14px;">
+            <div class="bar-fill" style="width:0%;background:var(--orange);border-radius:3px;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);margin-top:2px;">
+            <span>Input: 0</span>
+            <span>Billable: 0</span>
+            <span style="color:var(--yellow);">—</span>
+          </div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <span style="font-size:12px;font-weight:600;color:var(--red);">31+ spans</span>
+            <span style="font-size:11px;color:var(--text-dim);">0 sessions · 0% of input</span>
+          </div>
+          <div class="bar-container" style="height:14px;">
+            <div class="bar-fill" style="width:0%;background:var(--red);border-radius:3px;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);margin-top:2px;">
+            <span>Input: 0</span>
+            <span>Billable: 0</span>
+            <span style="color:var(--yellow);">—</span>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding:8px 12px;background:rgba(255,255,255,0.03);border-left:3px solid var(--green);border-radius:0 4px 4px 0;font-size:11px;color:var(--text);">Session lengths look healthy. Keep using short, focused chats.</div>
+    </div>
+      <div class="panel">
+        <h2><span class="dot yellow"></span> V3 — Hourly Consumption</h2>
+<div style="color:var(--text-dim);">No hourly data</div>
+    </div>
+    </div>
+
+    <div class="panel" style="margin-bottom:16px;">
+      <h2><span class="dot yellow"></span> V7 — Model Pricing Reference</h2>
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:10px;">
+        Source: <code style="color:var(--accent);">DASHBOARD_COST_SOURCE.md</code> — GitHub Copilot model picker
+        (2026-06-04) · Auto mode carries 10% discount
+      </div>
+      <table>
+        <tr>
+          <th>Model</th>
+          <th>Vendor</th>
+          <th class="r">Input cr / MTok</th>
+          <th class="r">Cached cr / MTok</th>
+          <th class="r">Output cr / MTok</th>
+          <th class="r">Max Context</th>
+          <th>Status</th>
+        </tr>
+        <tr>
+          <td><span class="model-tag claude">Claude Opus 4.6</span></td>
+          <td>Anthropic</td>
+          <td class="r">500</td>
+          <td class="r">50</td>
+          <td class="r">2500</td>
+          <td class="r">200K</td>
+          <td style="color:var(--green);">● Active</td>
+        </tr>
+        <tr>
+          <td><span class="model-tag claude">Claude Opus 4.8</span></td>
+          <td>Anthropic</td>
+          <td class="r">500</td>
+          <td class="r">50</td>
+          <td class="r">2500</td>
+          <td class="r">232K</td>
+          <td style="color:var(--green);">● Active</td>
+        </tr>
+        <tr>
+          <td><span class="model-tag claude">Claude Sonnet 4.6</span></td>
+          <td>Anthropic</td>
+          <td class="r">300</td>
+          <td class="r">30</td>
+          <td class="r">1500</td>
+          <td class="r">200K</td>
+          <td style="color:var(--green);">● Active</td>
+        </tr>
+        <tr>
+          <td><span class="model-tag claude">Claude Haiku 4.5</span></td>
+          <td>Anthropic</td>
+          <td class="r">100</td>
+          <td class="r">10</td>
+          <td class="r">500</td>
+          <td class="r">200K</td>
+          <td style="color:var(--green);">● Active</td>
+        </tr>
+        <tr>
+          <td><span class="model-tag claude">Claude Opus 4.5</span></td>
+          <td>Anthropic</td>
+          <td class="r">500</td>
+          <td class="r">50</td>
+          <td class="r">2500</td>
+          <td class="r">200K</td>
+          <td style="color:var(--green);">● Active</td>
+        </tr>
+        <tr>
+          <td><span class="model-tag claude">Claude Sonnet 4.5</span></td>
+          <td>Anthropic</td>
+          <td class="r">300</td>
+          <td class="r">30</td>
+          <td class="r">1500</td>
+          <td class="r">200K</td>
+          <td style="color:var(--green);">● Active</td>
+        </tr>
+        <tr>
+          <td><span class="model-tag" style="background:var(--border);color:var(--text);">Gemini 3.1 Pro</span></td>
+          <td>Google</td>
+          <td class="r">200</td>
+          <td class="r">20</td>
+          <td class="r">1200</td>
+          <td class="r">200K</td>
+          <td style="color:var(--orange);">● Preview</td>
+        </tr>
+        <tr>
+          <td><span class="model-tag" style="background:var(--border);color:var(--text);">Gemini 3.5 Flash</span></td>
+          <td>Google</td>
+          <td class="r">150</td>
+          <td class="r">15</td>
+          <td class="r">900</td>
+          <td class="r">192K</td>
+          <td style="color:var(--green);">● Active</td>
+        </tr>
+        <tr>
+          <td><span class="model-tag gpt">GPT-5 mini</span></td>
+          <td>OpenAI</td>
+          <td class="r">25</td>
+          <td class="r">2</td>
+          <td class="r">200</td>
+          <td class="r">192K</td>
+          <td style="color:var(--green);">● Active</td>
+        </tr>
+        <tr>
+          <td><span class="model-tag gpt">GPT-5.2-Codex</span></td>
+          <td>OpenAI</td>
+          <td class="r">175</td>
+          <td class="r">17</td>
+          <td class="r">1400</td>
+          <td class="r">400K</td>
+          <td style="color:var(--green);">● Active</td>
+        </tr>
+        <tr>
+          <td><span class="model-tag gpt">GPT-5.3-Codex</span></td>
+          <td>OpenAI</td>
+          <td class="r">175</td>
+          <td class="r">17</td>
+          <td class="r">1400</td>
+          <td class="r">400K</td>
+          <td style="color:var(--green);">● Active</td>
+        </tr>
+        <tr>
+          <td><span class="model-tag gpt">GPT-5.4</span></td>
+          <td>OpenAI</td>
+          <td class="r">250</td>
+          <td class="r">25</td>
+          <td class="r">1500</td>
+          <td class="r">400K</td>
+          <td style="color:var(--green);">● Active</td>
+        </tr>
+        <tr>
+          <td><span class="model-tag gpt">GPT-5.4 mini</span></td>
+          <td>OpenAI</td>
+          <td class="r">75</td>
+          <td class="r">7</td>
+          <td class="r">450</td>
+          <td class="r">400K</td>
+          <td style="color:var(--green);">● Active</td>
+        </tr>
+        <tr>
+          <td><span class="model-tag gpt">GPT-5.5</span></td>
+          <td>OpenAI</td>
+          <td class="r">500</td>
+          <td class="r">50</td>
+          <td class="r">3000</td>
+          <td class="r">400K</td>
+          <td style="color:var(--green);">● Active</td>
+        </tr>
+      </table>
+      <div style="font-size:10px;color:var(--text-dim);margin-top:8px;line-height:1.6;">
+        Credits per 1M tokens · Cached input = 10% of input rate (Anthropic) · Auto mode carries 10% discount · "—" =
+        not in current Copilot model picker
+      </div>
+    </div>
+    <div class="panel">
+      <h2><span class="dot accent"></span> V10 — Tokens per LLM Call (Top 20)</h2>
+<div style="color:var(--text-dim);">No data</div>
+    </div>
+
+    <div class="panel">
+      <h2><span class="dot red"></span> V12 — Time to First Token</h2>
+<div style="color:var(--text-dim);">No TTFT data</div>
+    </div>
+    <div class="grid-2">
+      <div class="panel">
+        <h2><span class="dot pink"></span> V13 — Internal Agent Types</h2>
+      <table>
+        <tr><th>Agent</th><th class="r">Calls</th><th class="r">Input</th><th class="r">Output</th></tr>
+
+      </table>
+    </div>
+      <div class="panel">
+        <h2><span class="dot cyan"></span> V14 — Tools & Completion</h2>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">TOOL CALLS</div>
+        <table>
+          <tr><th>Tool</th><th class="r">Count</th><th class="r">Avg</th></tr>
+
+        </table>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">FINISH REASONS</div>
+        <table>
+          <tr><th>Reason</th><th class="r">Count</th></tr>
+
+        </table>
+      </div>
+    </div>
+    </div>
+
+    <div class="panel">
+      <h2><span class="dot orange"></span> V15 — Context Growth per Agent Turn</h2>
+<div style="color:var(--text-dim);">No data</div>
+    </div>
+  </div> <!-- /tab-analysis -->
+
+
+  <div id="refreshToast" class="refresh-toast"></div>
+  <script>
+    var UPDATE_URL = 'http://127.0.0.1:4319/update';
+    var HEALTH_URL = 'http://127.0.0.1:4319/health';
+    function updatePipelineStatus() {
+      var el = document.getElementById('pipelineStatus');
+      var ts = document.getElementById('lastUpdated');
+      if (!el) return;
+      var tsText = ts ? ts.outerHTML : '';
+      fetch(HEALTH_URL, { mode: 'cors' })
+        .then(function (r) { return r.json(); })
+        .then(function () {
+          el.innerHTML = '\u25cf Pipeline Active ' + tsText;
+          el.className = 'live ok';
+        })
+        .catch(function () {
+          el.innerHTML = '\u25cb Pipeline Offline ' + tsText;
+          el.className = 'live offline';
+        });
+    }
+    updatePipelineStatus();
+
+    function applyHtml(html) {
+      var parser = new DOMParser();
+      var nextDoc = parser.parseFromString(html, 'text/html');
+      if (!nextDoc || !nextDoc.body) {
+        reloadDashboard();
+        return;
+      }
+      var activeTab = globalThis.location.hash.replace('#', '');
+      if (nextDoc.title) document.title = nextDoc.title;
+      document.body.innerHTML = nextDoc.body.innerHTML;
+      if (activeTab && document.getElementById('tab-' + activeTab)) {
+        switchTab(activeTab);
+      }
+      updatePipelineStatus();
+      showToast('Dashboard refreshed.', 'success');
+    }
+
+    function reloadDashboard() {
+      var url = globalThis.location.href.split('#')[0].split('?')[0];
+      // Fallback reload if no HTML is provided
+      globalThis.location.href = url + '?_=' + Date.now();
+    }
+    function triggerUpdate() {
+      var btn = document.querySelector('.refresh-btn');
+      var icon = document.getElementById('refreshIcon');
+      btn.classList.add('loading');
+      icon.classList.add('spin');
+      icon.innerHTML = '&#x21bb;';
+      fetch(UPDATE_URL)
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.success) {
+            if (data.html) {
+              applyHtml(data.html);
+            } else {
+              showToast('Dashboard updated — reloading...', 'success');
+              setTimeout(reloadDashboard, 2000);
+            }
+          } else {
+            showToast('Update failed: ' + (data.error || 'unknown error'), 'error');
+            btn.classList.remove('loading');
+            icon.classList.remove('spin');
+          }
+        })
+        .catch(function (err) {
+          showToast('Server not running. Double-click start-dashboard.cmd to launch.', 'error');
+          btn.classList.remove('loading');
+          icon.classList.remove('spin');
+        });
+    }
+    function filterPeriod(period) {
+      var btns = document.querySelectorAll('.period-btn');
+      btns.forEach(function (b) { b.classList.remove('active'); });
+      var active = document.querySelector('.period-btn[data-period="' + period + '"]');
+      if (active) active.classList.add('active');
+      showToast('Filtering to ' + (period === 'all' ? 'all data' : period) + '…', 'success');
+      fetch(UPDATE_URL + '?period=' + period + '&workspace=' + encodeURIComponent(currentWorkspace()))
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.success) {
+            if (data.html) {
+              applyHtml(data.html);
+            } else {
+              showToast('Filtered — reloading...', 'success');
+              setTimeout(reloadDashboard, 2000);
+            }
+          } else {
+            showToast('Filter failed: ' + (data.error || 'unknown error'), 'error');
+          }
+        })
+        .catch(function (err) {
+          showToast('Server not running.', 'error');
+        });
+    }
+    function currentPeriod() {
+      var a = document.querySelector('.period-btn.active');
+      return a ? a.dataset.period : 'all';
+    }
+    function currentWorkspace() {
+      var s = document.getElementById('workspaceFilter');
+      return s ? s.value : 'all';
+    }
+    function filterWorkspace(ws) {
+      showToast('Filtering workspace…', 'success');
+      fetch(UPDATE_URL + '?period=' + currentPeriod() + '&workspace=' + encodeURIComponent(ws))
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.success) {
+            if (data.html) {
+              applyHtml(data.html);
+            } else {
+              showToast('Filtered — reloading...', 'success');
+              setTimeout(reloadDashboard, 2000);
+            }
+          } else {
+            showToast('Filter failed: ' + (data.error || 'unknown error'), 'error');
+          }
+        })
+        .catch(function (err) {
+          showToast('Server not running.', 'error');
+        });
+    }
+    function showToast(msg, type) {
+      var t = document.getElementById('refreshToast');
+      t.textContent = msg;
+      t.className = 'refresh-toast show ' + type;
+      setTimeout(function () { t.className = 'refresh-toast'; }, 5000);
+    }
+
+    function switchTab(tab) {
+      // Hide all panes
+      document.querySelectorAll('.tab-pane').forEach(function (p) {
+        p.classList.remove('active');
+      });
+      // Deactivate all buttons
+      document.querySelectorAll('.tab-nav button').forEach(function (b) {
+        b.classList.remove('active');
+      });
+      // Show selected
+      document.getElementById('tab-' + tab).classList.add('active');
+      document.getElementById('btn-' + tab).classList.add('active');
+      // Update URL hash
+      history.replaceState(null, '', '#' + tab);
+    }
+    // Restore tab from hash on load
+    (function () {
+      var hash = location.hash.replace('#', '');
+      if (hash && document.getElementById('tab-' + hash)) {
+        switchTab(hash);
+      }
+    })();
+  </script>
+</body>
+
+</html>

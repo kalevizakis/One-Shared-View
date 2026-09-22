@@ -2,6 +2,7 @@ import { AlertTriangle } from "lucide-react";
 import { HealthBadge } from "@/components/shared/health-badge";
 import {
   HEALTH_LABEL,
+  IMPACT_LABEL,
   formatDate,
   formatShortDate,
   isStale,
@@ -39,8 +40,9 @@ interface ReportPaperProps {
 }
 
 /**
- * The leadership brief. Content is derived ONLY from updates submitted in the
- * selected cycle; missing and stale sources are disclosed rather than hidden.
+ * The leadership brief. Cycle health and delivery detail come only from
+ * submitted updates; stable summary/value context comes from each project.
+ * Missing and stale update sources are disclosed rather than hidden.
  */
 export function ReportPaper({
   title,
@@ -120,10 +122,22 @@ export function ReportPaper({
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <h4 className="text-sm font-bold">{project.name}</h4>
-                    <HealthBadge health={update.health} />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <HealthBadge health={update.health} />
+                      <span className="text-xs font-semibold text-muted-foreground">
+                        Impact:{" "}
+                        {update.impact ? IMPACT_LABEL[update.impact] : "Not provided"}
+                      </span>
+                    </div>
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    {update.executive_summary}
+                    {project.executive_summary || "No executive summary provided"}
+                  </p>
+                  <p className="mt-2 text-sm">
+                    <span className="font-semibold">Expected value: </span>
+                    <span className="text-muted-foreground">
+                      {project.expected_value || "Not provided"}
+                    </span>
                   </p>
                   {update.blocker_or_risk ? (
                     <p className="mt-2 text-sm">
@@ -187,10 +201,22 @@ export function ReportPaper({
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <h4 className="text-sm font-bold">{project.name}</h4>
-                    <HealthBadge health={update.health} />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <HealthBadge health={update.health} />
+                      <span className="text-xs font-semibold text-muted-foreground">
+                        Impact:{" "}
+                        {update.impact ? IMPACT_LABEL[update.impact] : "Not provided"}
+                      </span>
+                    </div>
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    {update.executive_summary}
+                    {project.executive_summary || "No executive summary provided"}
+                  </p>
+                  <p className="mt-2 text-sm">
+                    <span className="font-semibold">Expected value: </span>
+                    <span className="text-muted-foreground">
+                      {project.expected_value || "Not provided"}
+                    </span>
                   </p>
                   {configuration.includeLeadershipAsks && update.leadership_ask ? (
                     <p className="mt-2 text-sm">

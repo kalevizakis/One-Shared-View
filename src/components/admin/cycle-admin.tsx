@@ -2,8 +2,17 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Plus, Save, X } from "lucide-react";
+import { Loader2, Plus, Save, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { saveCycle } from "@/app/actions/admin";
+import { deleteCycle, saveCycle } from "@/app/actions/admin";
 import { CYCLE_STATUS_LABEL, formatDate } from "@/lib/domain/status";
 import type {
   CycleStatus,
@@ -54,6 +63,7 @@ export function CycleAdmin({ cycles, portfolio }: CycleAdminProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ReportingCycle | null>(null);
 
   function edit(cycle: ReportingCycle) {
     setDraft({
@@ -91,6 +101,36 @@ export function CycleAdmin({ cycles, portfolio }: CycleAdminProps) {
     });
   }
 
+  function canDelete(cycle: ReportingCycle): boolean {
+    const isHistorical =
+      cycle.status === "locked" || cycle.status === "closed";
+    const hasNewerCycle = cycles.some(
+      (candidate) =>
+        candidate.portfolio_id === cycle.portfolio_id &&
+        new Date(candidate.due_at).getTime() >
+          new Date(cycle.due_at).getTime(),
+    );
+    return isHistorical && hasNewerCycle;
+  }
+
+  function remove() {
+    if (!deleteTarget) return;
+
+    const formData = new FormData();
+    formData.set("id", deleteTarget.id);
+
+    startTransition(async () => {
+      const result = await deleteCycle(formData);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success(result.message ?? "Reporting cycle deleted.");
+      setDeleteTarget(null);
+      router.refresh();
+    });
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -98,7 +138,7 @@ export function CycleAdmin({ cycles, portfolio }: CycleAdminProps) {
           <h2 className="text-lg font-bold">Reporting cycles</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
             Locking a cycle freezes its updates — only an administrator can reopen
-            it.
+            it. Older locked or closed cycles can be permanently deleted.
           </p>
         </div>
         <Button
@@ -254,6 +294,7 @@ export function CycleAdmin({ cycles, portfolio }: CycleAdminProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Cycle</TableHead>
+              <TableHead>Start date</TableHead>
               <TableHead>Deadline</TableHead>
               <TableHead>Closes</TableHead>
               <TableHead>Status</TableHead>
@@ -264,6 +305,9 @@ export function CycleAdmin({ cycles, portfolio }: CycleAdminProps) {
             {cycles.map((cycle) => (
               <TableRow key={cycle.id}>
                 <TableCell className="font-medium">{cycle.name}</TableCell>
+                <TableCell className="text-sm">
+                  {formatDate(cycle.starts_at)}
+                </TableCell>
                 <TableCell className="text-sm">{formatDate(cycle.due_at)}</TableCell>
                 <TableCell className="text-sm">
                   {formatDate(cycle.closes_at)}
@@ -272,20 +316,65 @@ export function CycleAdmin({ cycles, portfolio }: CycleAdminProps) {
                   {CYCLE_STATUS_LABEL[cycle.status]}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => edit(cycle)}
-                    disabled={pending}
-                  >
-                    Edit
-                  </Button>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => edit(cycle)}
+                      disabled={pending}
+                    >
+                      Edit
+                    </Button>
+                    {canDelete(cycle) ? (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => setDeleteTarget(cycle)}
+                        disabled={pending || Boolean(draft)}
+                      >
+                        <Trash2 className="size-4" />
+                        Delete
+                      </Button>
+                    ) : null}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
+
+      <AlertDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open && !pending) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete {deleteTarget?.name ?? "reporting cycle"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This cannot be undone. All project updates, reminder records, and
+              generated reports for this cycle will be permanently deleted.
+              Decisions will remain, but will no longer link to their source
+              update.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+            <Button variant="destructive" onClick={remove} disabled={pending}>
+              {pending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Trash2 className="size-4" />
+              )}
+              {pending ? "Deleting…" : "Delete cycle"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

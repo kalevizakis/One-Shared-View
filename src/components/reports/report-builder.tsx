@@ -143,7 +143,7 @@ export function ReportBuilder({
               <div>
                 <h2 className="text-base font-bold">Executive readout</h2>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Edit the narrative without changing any owner-submitted figure.
+                  Edit the narrative without changing any source data.
                 </p>
               </div>
               {editingNarrative ? (

@@ -44,7 +44,8 @@ interface ProjectAdminProps {
 interface Draft {
   id: string | null;
   name: string;
-  description: string;
+  executiveSummary: string;
+  expectedValue: string;
   ownerProfileId: string;
   leadProfileId: string;
   lifecycleStatus: LifecycleStatus;
@@ -55,7 +56,8 @@ function emptyDraft(): Draft {
   return {
     id: null,
     name: "",
-    description: "",
+    executiveSummary: "",
+    expectedValue: "",
     ownerProfileId: NONE,
     leadProfileId: NONE,
     lifecycleStatus: "active",
@@ -75,7 +77,8 @@ export function ProjectAdmin({ projects, people, portfolio }: ProjectAdminProps)
     setDraft({
       id: project.id,
       name: project.name,
-      description: project.description ?? "",
+      executiveSummary: project.executive_summary ?? "",
+      expectedValue: project.expected_value ?? "",
       ownerProfileId: project.owner_profile_id ?? NONE,
       leadProfileId: project.lead_profile_id ?? NONE,
       lifecycleStatus: project.lifecycle_status,
@@ -89,7 +92,8 @@ export function ProjectAdmin({ projects, people, portfolio }: ProjectAdminProps)
     if (draft.id) formData.set("id", draft.id);
     formData.set("portfolioId", portfolio.id);
     formData.set("name", draft.name);
-    formData.set("description", draft.description);
+    formData.set("executiveSummary", draft.executiveSummary);
+    formData.set("expectedValue", draft.expectedValue);
     formData.set("ownerProfileId", draft.ownerProfileId);
     formData.set("leadProfileId", draft.leadProfileId);
     formData.set("lifecycleStatus", draft.lifecycleStatus);
@@ -149,15 +153,31 @@ export function ProjectAdmin({ projects, people, portfolio }: ProjectAdminProps)
             </div>
 
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="project-description">Description</Label>
+              <Label htmlFor="project-executive-summary">
+                Executive summary
+              </Label>
               <Textarea
-                id="project-description"
-                rows={2}
-                value={draft.description}
+                id="project-executive-summary"
+                rows={4}
+                value={draft.executiveSummary}
                 onChange={(event) =>
-                  setDraft({ ...draft, description: event.target.value })
+                  setDraft({ ...draft, executiveSummary: event.target.value })
                 }
-                maxLength={1000}
+                maxLength={1200}
+                required
+              />
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="project-expected-value">Expected value</Label>
+              <Textarea
+                id="project-expected-value"
+                rows={3}
+                value={draft.expectedValue}
+                onChange={(event) =>
+                  setDraft({ ...draft, expectedValue: event.target.value })
+                }
+                maxLength={1200}
               />
             </div>
 

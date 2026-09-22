@@ -22,6 +22,8 @@ const ACTION_LABEL: Record<string, string> = {
 const FIELD_LABEL: Record<string, string> = {
   health: "health",
   executive_summary: "executive summary",
+  expected_value: "expected value",
+  impact: "impact",
   accomplishments: "accomplishments",
   next_steps: "next steps",
   blocker_or_risk: "blocker or risk",

@@ -1,5 +1,6 @@
 import { HealthBadge } from "@/components/shared/health-badge";
 import {
+  IMPACT_LABEL,
   UPDATE_STATUS_LABEL,
   formatDateTime,
   relativeDay,
@@ -54,6 +55,11 @@ export function UpdateHistory({ updates, cycles, people }: UpdateHistoryProps) {
                   <span className="rounded-full bg-secondary px-2 py-0.5 text-[0.6875rem] font-semibold">
                     {UPDATE_STATUS_LABEL[update.status]}
                   </span>
+                  {update.impact ? (
+                    <span className="text-[0.6875rem] font-semibold text-muted-foreground">
+                      Impact: {IMPACT_LABEL[update.impact]}
+                    </span>
+                  ) : null}
                   {update.revision > 1 ? (
                     <span className="text-[0.6875rem] text-muted-foreground">
                       Revision {update.revision}
@@ -68,8 +74,6 @@ export function UpdateHistory({ updates, cycles, people }: UpdateHistoryProps) {
                     ? `submitted ${formatDateTime(update.submitted_at)} (${relativeDay(update.submitted_at)})`
                     : `last saved ${formatDateTime(update.updated_at)}`}
                 </p>
-
-                <p className="mt-2 text-sm">{update.executive_summary}</p>
 
                 <dl className="mt-2 space-y-1 text-sm">
                   <Detail label="Accomplished" value={update.accomplishments} />

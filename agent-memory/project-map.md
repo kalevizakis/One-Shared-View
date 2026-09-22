@@ -44,11 +44,11 @@ Route groups: `src/app/(app)/` is the authenticated shell (header + nav + footer
 | Name | Location | Fields | Purpose | Last Updated |
 |------|----------|--------|---------|--------------|
 | LoginForm | src/components/auth/login-form.tsx | ntid (+ "Preview the solution" button) | NTID sign-in; secondary outline control starts the read-only preview | 2026-09-21 |
-| UpdateForm | src/components/updates/update-form.tsx | project, health, executive summary, accomplishments, next steps, blocker, leadership ask, health reason, next action + owner, next milestone + date | Weekly update; health-conditional required fields; draft + submit | 2026-09-18 |
+| UpdateForm | src/components/updates/update-form.tsx | project, health, impact, accomplishments, next steps, blocker, leadership ask, health reason, next action + owner, next milestone + date | Weekly update; health-conditional required fields; draft + submit | 2026-09-22 |
 | ReportBuilder | src/components/reports/report-builder.tsx | title, audience, 3 content toggles, narrative | Generate report version, edit narrative, print | 2026-09-18 |
-| ProjectAdmin | src/components/admin/project-admin.tsx | name, description, owner, lead, lifecycle, cadence | Create/edit projects | 2026-09-18 |
-| PeopleAdmin | src/components/admin/people-admin.tsx | ntid, name, job title, role, active | Roster + role/access management | 2026-09-18 |
-| CycleAdmin | src/components/admin/cycle-admin.tsx | name, cadence, starts/due/closes, status | Create/edit reporting cycles | 2026-09-18 |
+| ProjectAdmin | src/components/admin/project-admin.tsx | name, executive summary, expected value, owner, lead, lifecycle, cadence | Create/edit projects | 2026-09-22 |
+| PeopleAdmin | src/components/admin/people-admin.tsx | ntid, name, job title, role, active | Roster + role/access management; guarded deletion of inactive, unreferenced entries | 2026-09-22 |
+| CycleAdmin | src/components/admin/cycle-admin.tsx | name, cadence, starts/due/closes, status | Create/edit cycles; permanently delete older locked/closed cycles with confirmation | 2026-09-22 |
 
 ## Components
 
@@ -108,7 +108,24 @@ Migrations in `supabase/migrations/`:
   generic audit trigger on 9 tables.
 - `20260918120100_one_shared_view_seed.sql` — pilot seed: 8 roster NTIDs, "CMO
   Digital" portfolio, 5 projects, 5 milestones, 3 cycles, 4 of 5 updates submitted
-  (readiness = 80%, matching the mockup), 3 open decisions.
+  (readiness discounts stale submissions), 3 open decisions.
+
+- `20260921170000_one_shared_view_profile_contacts.sql` — verified corporate
+  emails in `profile_contacts` (one-to-one with profiles). Lead/admin SELECT,
+  admin-only writes. Kept off `profiles` so preview never sees email PII. Apply
+  copy: `supabase/apply/one-shared-view-profile-contacts.sql`.
+- `20260921190000_one_shared_view_audit_entity_id_fix.sql` — `audit_trigger` now
+  reads the primary key through jsonb (`id`, falling back to `profile_id`), so a
+  table without an `id` column no longer aborts every write with 42703, and
+  redacts `profile_contacts.email` from `changes_json` because the preview
+  identity can read the audit trail. Apply copy:
+  `supabase/apply/one-shared-view-audit-entity-id-fix.sql`.
+- `20260922100000_one_shared_view_project_content.sql` — replaces
+  `projects.description` with project-level `executive_summary`, moves
+  `expected_value` from updates to projects, and removes both fields from the
+  weekly update. Latest submitted values are promoted; all removed source values
+  are retained in the non-API `one_shared_view_private` archive. Apply copy:
+  `supabase/apply/one-shared-view-project-content.sql`.
 
 - `20260921150000_one_shared_view_preview_identity.sql` — **the read-only preview
   identity.** Adds `profiles.is_preview`; inserts ONE shared powerless roster row
@@ -119,8 +136,8 @@ Migrations in `supabase/migrations/`:
   Apply copy: `supabase/apply/one-shared-view-preview-identity.sql`.
 
 **Status: the init/seed/grants/sign-in migrations are applied.
-`20260921150000` (preview identity) and the two roster scripts are NOT yet
-applied** — see current-context.md.
+`20260921170000` (profile contacts) must be applied before local email reminders
+work. Preview identity and roster scripts — see current-context.md.**
 
 ## Features
 

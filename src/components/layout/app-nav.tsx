@@ -4,7 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/types/database";
-import { canAdminister, canManageReporting } from "@/lib/domain/status";
+import {
+  canAdminister,
+  canManageReporting,
+  canViewReports,
+} from "@/lib/domain/status";
 
 interface AppNavProps {
   role: UserRole;
@@ -37,7 +41,7 @@ export function AppNav({
   const links = [
     { href: "/", label: "Portfolio", show: true },
     { href: "/my-update", label: "My update", show: isPreview || role !== "exec" },
-    { href: "/reports", label: "Reports", show: true },
+    { href: "/reports", label: "Reports", show: canViewReports(role) },
     {
       href: "/audit",
       label: "Audit trail",

@@ -18,6 +18,7 @@ import {
   LIFECYCLE_LABEL,
   MILESTONE_STATUS_LABEL,
   canEditProject,
+  canViewReports,
   formatShortDate,
   isOverdue,
   relativeDay,
@@ -79,9 +80,23 @@ export default async function ProjectDetailPage({ params }: PageProps) {
               <HealthBadge health={project.current_health} />
             ) : null}
           </div>
-          <p className="mt-2 max-w-[70ch] text-sm text-muted-foreground">
-            {project.description ?? "No description recorded for this project."}
-          </p>
+          <div className="mt-3 max-w-[70ch]">
+            <p className="text-xs font-bold tracking-wide text-muted-foreground uppercase">
+              Executive summary
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {project.executive_summary ??
+                "No executive summary recorded for this project."}
+            </p>
+            {project.expected_value ? (
+              <p className="mt-2 text-sm">
+                <span className="font-semibold">Expected value: </span>
+                <span className="text-muted-foreground">
+                  {project.expected_value}
+                </span>
+              </p>
+            ) : null}
+          </div>
           <p className="mt-2 text-sm text-muted-foreground">
             Owner: {owner?.display_name ?? "Unassigned"}
             {owner ? ` (${owner.ntid})` : ""} · Lead:{" "}
@@ -102,12 +117,14 @@ export default async function ProjectDetailPage({ params }: PageProps) {
               </Link>
             </Button>
           ) : null}
-          <Button asChild variant="outline">
-            <Link href="/reports">
-              <FileText className="size-4" />
-              Leadership report
-            </Link>
-          </Button>
+          {canViewReports(session.profile.role) ? (
+            <Button asChild variant="outline">
+              <Link href="/reports">
+                <FileText className="size-4" />
+                Leadership report
+              </Link>
+            </Button>
+          ) : null}
         </div>
       </div>
 

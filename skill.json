@@ -1,0 +1,64 @@
+{
+  "name": "essence-dev-team",
+  "displayName": "ESSENCE Dev Team",
+  "version": "2.8.0",
+  "status": "active",
+  "description": "A complete software team in a single skill: plan, build, test, secure, document, and ship — then see what it cost. Ten specialist roles collaborate on your request and pull in deeper expertise only when the task needs it, so simple work stays fast and cheap. Works on GitHub Copilot and Claude Code alike. Covers Pfizer's GenAI RAMP (Risk Assessment & Mitigation Plan) assembly, and a one-click Token Dashboard shows the cost, tokens, and cache efficiency of every session.",
+  "longDescription": "ESSENCE Dev Team gives you a full software team inside a single LLM. Describe what you need — a feature, a bug fix, a security review, a test suite, documentation, or a deployment — and the right specialists handle it end to end, with browser-verified results and clear cost visibility.\n\n**What's new in v2.8.0:**\n\n• **Works correctly on Claude Code, not just VS Code** — a new Platform Adaptation clause maps every named tool (structured questions, session history, browser automation, subagents) to its nearest host equivalent, so MUST directives are satisfiable on both declared platforms instead of silently assuming VS Code.\n• **Leaner always-on core** — the Token Dashboard and Self-Update sections in the always-loaded core were condensed to short pointers, with full step-by-step detail moved to the on-demand playbook; published token-budget numbers were re-measured against the result and now match the harness.\n• **Mechanized release gates** — a single release_check command (and a git pre-commit hook that runs it automatically) now enforces structural/version-consistency checks (count printed in its own summary line) plus a token-budget harness before anything ships, replacing a manual, easy-to-skip habit.\n• **Privacy fix for the Token Dashboard** — the shipped dashboard template previously carried a real usage snapshot with internal project names and cost data; it now ships as a genuine empty state.\n• **Small correctness fixes**: the response header's placeholder fields are now defined with an example, the routing order now includes the Project Management persona ahead of Business Analysis (matching the documented dependency rule), and a telemetry-sync bug that could break the local dashboard's auto-update container has been fixed.\n\n**What's new in v2.7.2:**\n\n• **CC#1 Windows-equivalent destructive triggers** — the guard's recursive-force-delete and disk/volume-wipe triggers now name PowerShell forms (`Remove-Item -Recurse -Force`, `rd /s /q`, `del /f /s /q`, `rmdir /s /q`, `Clear-Disk`, `Format-Volume`, `diskpart clean`) alongside the Unix originals, plus a `cc1Equivalents[6]` mapping and an explicit \"judge the effect, not the spelling\" rule (PowerShell aliases `rm`/`del`/`rd`/`rmdir` to `Remove-Item`).\n• **Self-update check fixed** — the version-notify check now reads the published manifest via an authenticated `gh api` call instead of an unauthenticated `raw.githubusercontent.com` fetch, which 404s for every user against the private marketplace repo and could never detect an update in v2.7.0/v2.7.1.\n\n**What's new in v2.7.1:**\n\n• **A1 run isolation via git worktrees** — new documented practice (`references/a1-git-workflow.md §8`) for isolating scheduled/autonomous/loop-triggered runs in a dedicated git worktree keyed by run-id, with a double-claim registry pattern and CC#1-gated cleanup.\n• **R#6 (Delegate) design update** — the rule now calls out worktree isolation for autonomous/loop delegation, cross-linked to the new §8.\n\n**What's new in v2.7.0:**\n\n• **Self-update (version notify + approval-gated upgrade)** — on workspace-grounded session starts (throttled to once per 24h), ESSENCE compares its installed version against the published manifest and raises a one-line update-available notice; on explicit request it backs up the active install, upgrades via the skills CLI, and verifies. Never auto-applies.\n• **Footer priority-1 slot for the update notice** — the update-available line takes the top footer priority; the model-cost, retrospective, and session-health footers shift down. Still one arbitrated slot, never stacked.\n• **VS Code 1.128 managed-telemetry precheck** — the Token Dashboard setup gate now flags that an org-managed OpenTelemetry block overrides `OTEL_*` env vars and user settings, the likely cause of a silently empty local dashboard.\n\n**What's new in v2.6.1:**\n\n• **A2 UAT comparison-workbook methodology** — a proven, reusable process for building UAT workbooks that compare a dashboard-under-test against a baseline (prior prod or an AI agent): two scenario classes, reference-sheets-first structure, dual-block layout, live-linked rollup, and the agent-as-baseline comparison pattern.\n• **A2 Excel workbook automation (Python win32com)** — when to use COM over openpyxl (x14 dropdowns, embedded images), COM robustness patterns, the per-character formatting gotcha, and common styling ops.\n\n**What's new in v2.6.0:**\n\n• **Drift-lint hardening** — the maintainer architecture doc (`docs/ARCHITECTURE.md`) is now covered by drift-lint and the token-budget harness, a stale guard-count check mirrors the existing rule-count check, and a new check catches the reference catalog silently falling out of sync with SKILL.md's bullet list.\n• **Single footer-slot policy** — the model-cost hint (R#1), the retrospective cost note (R#8), and the session-health footer (R#12) now share one arbitrated footer slot instead of three independently-suppressing rules, cutting lean-core size.\n• **Gated session-start checks** — Non-Negotiable #3's Chronicle query and Token Dashboard check now only fire when a request has workspace/codebase grounding, removing a fixed tool-call tax from trivial one-shot sessions.\n• **Hygiene** — repo now ships a `.gitignore`; the telemetry updater's local-timezone offset is configurable via `DASHBOARD_TZ_OFFSET_HOURS` instead of hardcoded.\n• Carries forward CC#7 prompt-injection defense, Chronicle session history, lean-core loading, and per-workspace cost attribution from v2.5.x.\n\nBuilt for efficiency: a small always-on core handles simple tasks directly and brings in the full rule set only when a request is complex, compliance-sensitive, or involves scaffolding or destructive operations — so you spend tokens only when the work justifies it.\n\n**Token Dashboard (built-in cost visibility):**\n\n• See exactly what every session costs — by model, by workspace, and over time.\n• Per-workspace cost attribution with a dashboard-wide filter to isolate a single project.\n• KPIs for cache efficiency, token composition, and response latency (time-to-first-token).\n• One-click Docker setup (PostgreSQL + OTLP Receiver + Aspire Dashboard); auto-suggested on first use or started just by asking.\n• GitHub Copilot credit-based pricing per model tier (with cache discounts).\n\n**Personas:**\n\n• Development (A1) — Full-stack implementation with session continuity protocol, browser-verified delivery via Playwright, decision provenance tags. Language-agnostic (TypeScript, Python, SQL, etc.).\n\n• Testing (A2) — Full testing lifecycle (verification → unit → UAT smoke → formal UAT → PROD smoke). Mechanical test derivation from use cases with full requirement-to-test traceability. Fail-fast pyramid enforcement.\n\n• UX (A3) — DAVINCI 7-dimension scoring, React + MUI 5.x theming, WCAG 2.1 AA compliance, Pfizer Brand Identity 2026 design system, presentation design (Marp), visual argument diagrams (Excalidraw).\n\n• Documentation (A4) — Presentations (Marp slide decks), technical documentation, and architecture diagrams (Mermaid/D2/Excalidraw/Chart.js). Argument-First methodology, 3 HTML doc styles (Gantt-Slide, Pipeline-Architecture, Training-Onboarding), semver changelogs.\n\n• Infrastructure (A5) — Built-in Token Dashboard (full-stack observability: PostgreSQL + OTLP Receiver + Aspire Dashboard — one-click Docker setup). 4-Layer Backup Protocol, env progression gates (Dev→Stage→Prod), Docker multi-stage, CloudFormation rollback, RFC lifecycle management.\n\n• BA/Systems Analyst (A6) — Full analysis pipeline (DFD→Logical ERD), 4-type requirements taxonomy with MoSCoW, use case modeling, CRUD matrices, NFR-driven architecture selection.\n\n• Security (A7) — 3-tier review (Lite/Standard/Full), STRIDE threat modeling with risk scoring, OWASP Top 10 sweep, 5-Step Destructive Op Pre-Flight, default-deny on tier ambiguity, RLS + credential audit.\n\n• Project Management (A8) — ADLC 6-phase enforcement, dual-approval gates (Soft→MSB), WTTE document tracking with approval matrix, task-type scope classification, ceremony ownership (Sprint Planning/Refinement/Review).\n\n• Reusable Components (A9) — Dual-mode (Proactive Scan + Reactive Recall), product→capability→feature mapping, reusability scoring with A7 security gate, enhancement proposals for near-reusable components.\n\n• Quality Control (A10) — Final gate for multi-persona work, cross-persona consistency checks (UI↔API, schema↔queries), ADLC artifact verification, silent-fix philosophy, AI output validation (deterministic metrics).\n\nModel-agnostic: runs on any capable LLM (Claude Opus 4+, Claude Sonnet 4+, GPT-4o+, Gemini 2.5+). Text-only — no vision required.",
+  "category": "Coding",
+  "level": "Expert",
+  "tags": [
+    "multi-persona-orchestration",
+    "lean-core",
+    "token-optimized",
+    "telemetry-dashboard",
+    "observability",
+    "full-stack",
+    "business-analysis",
+    "testing",
+    "ux",
+    "devops",
+    "security",
+    "adlc",
+    "material-ui",
+    "copilot"
+  ],
+  "maintainers": [
+    {
+      "name": "Henri Kuqali",
+      "email": "henri.kuqali@pfizer.com"
+    }
+  ],
+  "visibility": "public",
+  "dependencies": [],
+  "icon": "🏗️",
+  "docs": [
+    {
+      "label": "SKILL.md",
+      "path": "SKILL.md"
+    },
+    {
+      "label": "Copilot Instructions",
+      "path": "templates/copilot-instructions.md"
+    },
+    {
+      "label": "References",
+      "path": "references/"
+    },
+    {
+      "label": "Token Dashboard Pipeline",
+      "path": "infrastructure/telemetry/"
+    },
+    {
+      "label": "Recommended VS Code Settings",
+      "path": "templates/vscode-settings.jsonc"
+    }
+  ],
+  "repoUrl": "https://github.com/pfizer-fit/skills-oneweb/tree/main/skills/essence-dev-team",
+  "installCmd": "npx skills add https://github.com/pfizer-fit/skills-oneweb --skill essence-dev-team --agent claude-code --agent github-copilot && node -e \"const fs=require('fs'),p='.github/agents',s='.agents/skills/essence-dev-team/agent/essence.agent.md';fs.mkdirSync(p,{recursive:true});fs.copyFileSync(s,p+'/essence.agent.md');console.log('ESSENCE agent activated — restart VS Code or reload window')\"",
+  "platform": [
+    "claude",
+    "copilot"
+  ],
+  "team": "ESSENCE"
+}

@@ -18,10 +18,15 @@ import {
 } from "@/components/ui/select";
 import { HealthBadge } from "@/components/shared/health-badge";
 import { saveProjectUpdate } from "@/app/actions/updates";
-import { HEALTH_LABEL, formatDateTime } from "@/lib/domain/status";
+import {
+  HEALTH_LABEL,
+  IMPACT_LABEL,
+  formatDateTime,
+} from "@/lib/domain/status";
 import { projectUpdateSchema } from "@/lib/domain/validation";
 import type {
   HealthStatus,
+  ImpactLevel,
   Milestone,
   Profile,
   ProjectUpdate,
@@ -37,12 +42,13 @@ interface UpdateFormProps {
   existingUpdate: ProjectUpdate | null;
   nextMilestone: Milestone | null;
   readOnly: boolean;
+  reportsAvailable: boolean;
 }
 
 interface FormState {
   projectId: string;
   health: HealthStatus;
-  executiveSummary: string;
+  impact: ImpactLevel | "";
   accomplishments: string;
   nextSteps: string;
   blockerOrRisk: string;
@@ -54,6 +60,30 @@ interface FormState {
   nextMilestoneDate: string;
 }
 
+function createFormState(
+  projectId: string,
+  existingUpdate: ProjectUpdate | null,
+  nextMilestone: Milestone | null,
+): FormState {
+  return {
+    projectId,
+    health: existingUpdate?.health ?? "on_track",
+    impact: existingUpdate?.impact ?? "",
+    accomplishments: existingUpdate?.accomplishments ?? "",
+    nextSteps: existingUpdate?.next_steps ?? "",
+    blockerOrRisk: existingUpdate?.blocker_or_risk ?? "",
+    leadershipAsk: existingUpdate?.leadership_ask ?? "",
+    healthChangeReason: existingUpdate?.health_change_reason ?? "",
+    nextAction: existingUpdate?.next_action ?? "",
+    nextActionOwnerProfileId:
+      existingUpdate?.next_action_owner_profile_id ?? "",
+    nextMilestoneName:
+      existingUpdate?.next_milestone_name ?? nextMilestone?.name ?? "",
+    nextMilestoneDate:
+      existingUpdate?.next_milestone_date ?? nextMilestone?.target_date ?? "",
+  };
+}
+
 export function UpdateForm({
   projects,
   cycle,
@@ -62,27 +92,15 @@ export function UpdateForm({
   existingUpdate,
   nextMilestone,
   readOnly,
+  reportsAvailable,
 }: UpdateFormProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const [form, setForm] = useState<FormState>({
-    projectId: initialProjectId,
-    health: existingUpdate?.health ?? "on_track",
-    executiveSummary: existingUpdate?.executive_summary ?? "",
-    accomplishments: existingUpdate?.accomplishments ?? "",
-    nextSteps: existingUpdate?.next_steps ?? "",
-    blockerOrRisk: existingUpdate?.blocker_or_risk ?? "",
-    leadershipAsk: existingUpdate?.leadership_ask ?? "",
-    healthChangeReason: existingUpdate?.health_change_reason ?? "",
-    nextAction: existingUpdate?.next_action ?? "",
-    nextActionOwnerProfileId: existingUpdate?.next_action_owner_profile_id ?? "",
-    nextMilestoneName:
-      existingUpdate?.next_milestone_name ?? nextMilestone?.name ?? "",
-    nextMilestoneDate:
-      existingUpdate?.next_milestone_date ?? nextMilestone?.target_date ?? "",
-  });
+  const [form, setForm] = useState<FormState>(() =>
+    createFormState(initialProjectId, existingUpdate, nextMilestone),
+  );
 
   const selectedProject = useMemo(
     () => projects.find((project) => project.id === form.projectId),
@@ -92,7 +110,11 @@ export function UpdateForm({
   const needsExceptionDetail =
     form.health === "at_risk" || form.health === "blocked";
   const needsNextAction = form.health === "blocked";
-  const alreadySubmitted = existingUpdate?.status === "submitted";
+  const displayedUpdate =
+    form.projectId === initialProjectId
+      ? existingUpdate
+      : (selectedProject?.currentUpdate ?? null);
+  const alreadySubmitted = displayedUpdate?.status === "submitted";
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((previous) => ({ ...previous, [key]: value }));
@@ -105,6 +127,13 @@ export function UpdateForm({
   }
 
   function handleProjectChange(projectId: string) {
+    const project = projects.find((candidate) => candidate.id === projectId);
+    if (!project) return;
+
+    setForm(
+      createFormState(project.id, project.currentUpdate, project.nextMilestone),
+    );
+    setErrors({});
     router.push(`/my-update?cycle=${cycle.id}&project=${projectId}`);
   }
 
@@ -113,7 +142,7 @@ export function UpdateForm({
       projectId: form.projectId,
       reportingCycleId: cycle.id,
       health: form.health,
-      executiveSummary: form.executiveSummary,
+      impact: form.impact,
       accomplishments: form.accomplishments,
       nextSteps: form.nextSteps,
       blockerOrRisk: form.blockerOrRisk,
@@ -151,8 +180,11 @@ export function UpdateForm({
         return;
       }
       toast.success(result.message ?? "Saved.");
-      if (intent === "submit") router.push("/reports");
-      else router.refresh();
+      if (intent === "submit") {
+        router.push(reportsAvailable ? "/reports" : "/");
+      } else {
+        router.refresh();
+      }
     });
   }
 
@@ -179,31 +211,31 @@ export function UpdateForm({
           <Alert className="mb-5">
             <Info className="size-4" />
             <AlertDescription>
-              Submitted {formatDateTime(existingUpdate.submitted_at)}. Any change
-              you make now is recorded in the audit history as an edit after
-              submission.
+              Last submitted {formatDateTime(displayedUpdate.submitted_at)}. Any
+              change you make now is recorded in the audit history as an edit
+              after submission.
             </AlertDescription>
           </Alert>
         ) : null}
 
         <fieldset disabled={readOnly || pending} className="space-y-5">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Project" htmlFor="project" error={errors.projectId}>
-              <Select value={form.projectId} onValueChange={handleProjectChange}>
-                <SelectTrigger id="project">
-                  <SelectValue placeholder="Select a project" />
-                </SelectTrigger>
-                <SelectContent>
-                  {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
-                      {project.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
+          <Field label="Project" htmlFor="project" error={errors.projectId}>
+            <Select value={form.projectId} onValueChange={handleProjectChange}>
+              <SelectTrigger id="project">
+                <SelectValue placeholder="Select a project" />
+              </SelectTrigger>
+              <SelectContent>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
 
-            <Field label="Overall health" htmlFor="health" error={errors.health}>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Status" htmlFor="health" error={errors.health}>
               <Select
                 value={form.health}
                 onValueChange={(value) => set("health", value as HealthStatus)}
@@ -222,24 +254,25 @@ export function UpdateForm({
                 </SelectContent>
               </Select>
             </Field>
-          </div>
 
-          <Field
-            label="Executive summary"
-            htmlFor="executiveSummary"
-            hint="Write the one message leadership should remember."
-            error={errors.executiveSummary}
-            required
-          >
-            <Textarea
-              id="executiveSummary"
-              value={form.executiveSummary}
-              onChange={(event) => set("executiveSummary", event.target.value)}
-              rows={4}
-              maxLength={1200}
-              aria-invalid={Boolean(errors.executiveSummary)}
-            />
-          </Field>
+            <Field label="Impact" htmlFor="impact" error={errors.impact}>
+              <Select
+                value={form.impact}
+                onValueChange={(value) => set("impact", value as ImpactLevel)}
+              >
+                <SelectTrigger id="impact">
+                  <SelectValue placeholder="Select impact" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(IMPACT_LABEL) as ImpactLevel[]).map((value) => (
+                    <SelectItem key={value} value={value}>
+                      {IMPACT_LABEL[value]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+          </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Accomplished this period" htmlFor="accomplishments">
@@ -417,7 +450,7 @@ export function UpdateForm({
 
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-base font-bold">Live summary</h2>
+            <h2 className="text-base font-bold">Project context</h2>
             <HealthBadge health={form.health} />
           </div>
 
@@ -425,8 +458,30 @@ export function UpdateForm({
             {selectedProject?.name ?? "Select a project"}
           </h3>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            {form.executiveSummary || "Your executive summary appears here."}
+            {selectedProject?.executive_summary ||
+              "No executive summary is recorded for this project."}
           </p>
+
+          {(selectedProject?.expected_value || form.impact) ? (
+            <dl className="mt-3 grid gap-2 text-sm">
+              {selectedProject?.expected_value ? (
+                <div>
+                  <dt className="font-semibold">Expected value</dt>
+                  <dd className="text-muted-foreground">
+                    {selectedProject.expected_value}
+                  </dd>
+                </div>
+              ) : null}
+              {form.impact ? (
+                <div>
+                  <dt className="font-semibold">Impact</dt>
+                  <dd className="text-muted-foreground">
+                    {IMPACT_LABEL[form.impact]}
+                  </dd>
+                </div>
+              ) : null}
+            </dl>
+          ) : null}
 
           {form.leadershipAsk ? (
             <>
@@ -442,9 +497,6 @@ export function UpdateForm({
         <div className="rounded-xl border border-border bg-card p-5">
           <h2 className="text-base font-bold">Update quality checks</h2>
           <ul className="mt-3 space-y-2">
-            <Check done={form.executiveSummary.trim().length >= 20}>
-              Summary is concise and outcome-oriented
-            </Check>
             <Check done={Boolean(form.nextSteps.trim())}>
               Next planned work is recorded
             </Check>

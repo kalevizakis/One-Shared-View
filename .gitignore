@@ -53,3 +53,22 @@ supabase/.temp/
 supabase/.branches/
 
 .agent-browser/
+
+# Python
+__pycache__/
+*.pyc
+
+# Editor / patch backups
+*.bak
+*.bak_*
+/Archive.zip
+
+# Secrets / session artifacts — never commit
+cookie.txt
+_env
+.env
+*.env
+
+# OS cruft
+.DS_Store
+Thumbs.db
