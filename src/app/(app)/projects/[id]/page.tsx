@@ -15,6 +15,7 @@ import {
   getUpdateHistory,
 } from "@/lib/data/queries";
 import {
+  IMPACT_LABEL,
   LIFECYCLE_LABEL,
   MILESTONE_STATUS_LABEL,
   canEditProject,
@@ -93,6 +94,14 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                 <span className="font-semibold">Expected value: </span>
                 <span className="text-muted-foreground">
                   {project.expected_value}
+                </span>
+              </p>
+            ) : null}
+            {project.impact ? (
+              <p className="mt-2 text-sm">
+                <span className="font-semibold">Impact: </span>
+                <span className="text-muted-foreground">
+                  {IMPACT_LABEL[project.impact]}
                 </span>
               </p>
             ) : null}

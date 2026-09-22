@@ -56,11 +56,14 @@ async function Dashboard({ searchParams }: PageProps) {
 
   const canSendReminders =
     !session.isPreview && canManageReporting(session.profile.role);
+  const canViewReadiness = canSendReminders || session.isPreview;
 
   const [projects, profiles, reminders, contacts] = await Promise.all([
     getProjectsWithContext(cycle.id),
     getProfiles(),
-    getRemindersForCycle(cycle.id),
+    canSendReminders
+      ? getRemindersForCycle(cycle.id)
+      : Promise.resolve([]),
     canSendReminders
       ? getProfileContacts()
       : Promise.resolve({} as Record<string, never>),
@@ -90,14 +93,12 @@ async function Dashboard({ searchParams }: PageProps) {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-xs font-bold tracking-[0.1em] text-primary uppercase">
-            Delivery intelligence
-          </p>
-          <h1 className="mt-1.5 text-3xl font-bold tracking-tight">
-            Portfolio health
+          <h1 className="text-3xl font-bold tracking-tight text-primary">
+            Portfolio Project Status Intelligence
           </h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            A current view of delivery, decisions, and leadership asks.
+            A current view of Project delivery, risks, blocks, decisions, and
+            leadership asks.
           </p>
         </div>
 
@@ -129,18 +130,20 @@ async function Dashboard({ searchParams }: PageProps) {
         <StatCard label="Blocked" value={metrics.blocked} tone="blocked" />
       </div>
 
-      <ReportingReadiness
-        cycle={cycle}
-        completeness={metrics.completeness}
-        currentSubmittedCount={metrics.currentSubmittedCount}
-        reportingProjects={metrics.reportingProjects}
-        outstanding={metrics.readinessOutstanding}
-        staleCount={metrics.stale.length}
-        reminders={reminders}
-        contactEmails={contactEmails}
-        appUrl={publicAppUrl()}
-        canSendReminders={canSendReminders}
-      />
+      {canViewReadiness ? (
+        <ReportingReadiness
+          cycle={cycle}
+          completeness={metrics.completeness}
+          currentSubmittedCount={metrics.currentSubmittedCount}
+          reportingProjects={metrics.reportingProjects}
+          outstanding={metrics.readinessOutstanding}
+          staleCount={metrics.stale.length}
+          reminders={reminders}
+          contactEmails={contactEmails}
+          appUrl={publicAppUrl()}
+          canSendReminders={canSendReminders}
+        />
+      ) : null}
 
       <ProjectTable projects={projects} owners={owners} />
 

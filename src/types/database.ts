@@ -63,6 +63,7 @@ export interface Project {
   name: string;
   executive_summary: string | null;
   expected_value: string | null;
+  impact: ImpactLevel | null;
   portfolio_id: string;
   owner_profile_id: string | null;
   lead_profile_id: string | null;
@@ -99,7 +100,6 @@ export interface ProjectUpdate {
   reporting_cycle_id: string;
   author_profile_id: string | null;
   health: HealthStatus;
-  impact: ImpactLevel | null;
   accomplishments: string | null;
   next_steps: string | null;
   blocker_or_risk: string | null;

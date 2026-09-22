@@ -44,9 +44,9 @@ Route groups: `src/app/(app)/` is the authenticated shell (header + nav + footer
 | Name | Location | Fields | Purpose | Last Updated |
 |------|----------|--------|---------|--------------|
 | LoginForm | src/components/auth/login-form.tsx | ntid (+ "Preview the solution" button) | NTID sign-in; secondary outline control starts the read-only preview | 2026-09-21 |
-| UpdateForm | src/components/updates/update-form.tsx | project, health, impact, accomplishments, next steps, blocker, leadership ask, health reason, next action + owner, next milestone + date | Weekly update; health-conditional required fields; draft + submit | 2026-09-22 |
+| UpdateForm | src/components/updates/update-form.tsx | project, health, accomplishments, next steps, blocker, leadership ask, health reason, next action + owner, next milestone + date | Weekly update; health-conditional required fields; draft + submit. Impact is shown read-only in the project-context aside | 2026-09-22 |
 | ReportBuilder | src/components/reports/report-builder.tsx | title, audience, 3 content toggles, narrative | Generate report version, edit narrative, print | 2026-09-18 |
-| ProjectAdmin | src/components/admin/project-admin.tsx | name, executive summary, expected value, owner, lead, lifecycle, cadence | Create/edit projects | 2026-09-22 |
+| ProjectAdmin | src/components/admin/project-admin.tsx | name, executive summary, expected value, impact, owner, lead, lifecycle, cadence | Create/edit projects | 2026-09-22 |
 | PeopleAdmin | src/components/admin/people-admin.tsx | ntid, name, job title, role, active | Roster + role/access management; guarded deletion of inactive, unreferenced entries | 2026-09-22 |
 | CycleAdmin | src/components/admin/cycle-admin.tsx | name, cadence, starts/due/closes, status | Create/edit cycles; permanently delete older locked/closed cycles with confirmation | 2026-09-22 |
 
@@ -126,6 +126,12 @@ Migrations in `supabase/migrations/`:
   weekly update. Latest submitted values are promoted; all removed source values
   are retained in the non-API `one_shared_view_private` archive. Apply copy:
   `supabase/apply/one-shared-view-project-content.sql`.
+- `20260922110000_one_shared_view_project_impact.sql` — moves `impact` from
+  `project_updates` to `projects`, the last of the three stable fields to leave
+  the weekly update. Latest submitted assessment is promoted; every update-level
+  value including drafts is archived as text in the non-API
+  `one_shared_view_private` archive before the column is dropped. Apply copy:
+  `supabase/apply/one-shared-view-project-impact.sql`.
 
 - `20260921150000_one_shared_view_preview_identity.sql` — **the read-only preview
   identity.** Adds `profiles.is_preview`; inserts ONE shared powerless roster row

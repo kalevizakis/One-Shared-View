@@ -167,6 +167,8 @@ body {
   html,
   body {
     background: #fff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   [data-print="hide"] {
     display: none !important;
@@ -180,6 +182,21 @@ body {
   [data-print="break-avoid"] {
     break-inside: avoid;
     page-break-inside: avoid;
+  }
+  /*
+   * Spark Build injects a floating "Built by Spark" lockup (fixed overlay,
+   * sometimes an iframe). Keep it off the exported leadership readout.
+   */
+  .fixed,
+  [class~="fixed"],
+  [style*="position: fixed"],
+  [style*="position:fixed"],
+  iframe[src*="spark" i],
+  [id*="spark-badge" i],
+  [class*="spark-badge" i],
+  [data-spark-badge],
+  [data-sonner-toaster] {
+    display: none !important;
   }
 }
 

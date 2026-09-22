@@ -126,7 +126,9 @@ export function ReportPaper({
                       <HealthBadge health={update.health} />
                       <span className="text-xs font-semibold text-muted-foreground">
                         Impact:{" "}
-                        {update.impact ? IMPACT_LABEL[update.impact] : "Not provided"}
+                        {project.impact
+                          ? IMPACT_LABEL[project.impact]
+                          : "Not provided"}
                       </span>
                     </div>
                   </div>
@@ -205,7 +207,9 @@ export function ReportPaper({
                       <HealthBadge health={update.health} />
                       <span className="text-xs font-semibold text-muted-foreground">
                         Impact:{" "}
-                        {update.impact ? IMPACT_LABEL[update.impact] : "Not provided"}
+                        {project.impact
+                          ? IMPACT_LABEL[project.impact]
+                          : "Not provided"}
                       </span>
                     </div>
                   </div>

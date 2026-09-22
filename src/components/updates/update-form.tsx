@@ -26,7 +26,6 @@ import {
 import { projectUpdateSchema } from "@/lib/domain/validation";
 import type {
   HealthStatus,
-  ImpactLevel,
   Milestone,
   Profile,
   ProjectUpdate,
@@ -48,7 +47,6 @@ interface UpdateFormProps {
 interface FormState {
   projectId: string;
   health: HealthStatus;
-  impact: ImpactLevel | "";
   accomplishments: string;
   nextSteps: string;
   blockerOrRisk: string;
@@ -68,7 +66,6 @@ function createFormState(
   return {
     projectId,
     health: existingUpdate?.health ?? "on_track",
-    impact: existingUpdate?.impact ?? "",
     accomplishments: existingUpdate?.accomplishments ?? "",
     nextSteps: existingUpdate?.next_steps ?? "",
     blockerOrRisk: existingUpdate?.blocker_or_risk ?? "",
@@ -142,7 +139,6 @@ export function UpdateForm({
       projectId: form.projectId,
       reportingCycleId: cycle.id,
       health: form.health,
-      impact: form.impact,
       accomplishments: form.accomplishments,
       nextSteps: form.nextSteps,
       blockerOrRisk: form.blockerOrRisk,
@@ -234,45 +230,23 @@ export function UpdateForm({
             </Select>
           </Field>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Status" htmlFor="health" error={errors.health}>
-              <Select
-                value={form.health}
-                onValueChange={(value) => set("health", value as HealthStatus)}
-              >
-                <SelectTrigger id="health">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(
-                    Object.keys(HEALTH_LABEL) as HealthStatus[]
-                  ).map((value) => (
-                    <SelectItem key={value} value={value}>
-                      {HEALTH_LABEL[value]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-
-            <Field label="Impact" htmlFor="impact" error={errors.impact}>
-              <Select
-                value={form.impact}
-                onValueChange={(value) => set("impact", value as ImpactLevel)}
-              >
-                <SelectTrigger id="impact">
-                  <SelectValue placeholder="Select impact" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(IMPACT_LABEL) as ImpactLevel[]).map((value) => (
-                    <SelectItem key={value} value={value}>
-                      {IMPACT_LABEL[value]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-          </div>
+          <Field label="Status" htmlFor="health" error={errors.health}>
+            <Select
+              value={form.health}
+              onValueChange={(value) => set("health", value as HealthStatus)}
+            >
+              <SelectTrigger id="health">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.keys(HEALTH_LABEL) as HealthStatus[]).map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {HEALTH_LABEL[value]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Accomplished this period" htmlFor="accomplishments">
@@ -462,9 +436,9 @@ export function UpdateForm({
               "No executive summary is recorded for this project."}
           </p>
 
-          {(selectedProject?.expected_value || form.impact) ? (
+          {selectedProject?.expected_value || selectedProject?.impact ? (
             <dl className="mt-3 grid gap-2 text-sm">
-              {selectedProject?.expected_value ? (
+              {selectedProject.expected_value ? (
                 <div>
                   <dt className="font-semibold">Expected value</dt>
                   <dd className="text-muted-foreground">
@@ -472,11 +446,11 @@ export function UpdateForm({
                   </dd>
                 </div>
               ) : null}
-              {form.impact ? (
+              {selectedProject.impact ? (
                 <div>
                   <dt className="font-semibold">Impact</dt>
                   <dd className="text-muted-foreground">
-                    {IMPACT_LABEL[form.impact]}
+                    {IMPACT_LABEL[selectedProject.impact]}
                   </dd>
                 </div>
               ) : null}

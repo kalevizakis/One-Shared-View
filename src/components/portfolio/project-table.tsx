@@ -305,9 +305,7 @@ export function ProjectTable({ projects, owners }: ProjectTableProps) {
                       ) : null}
                     </TableCell>
                     <TableCell className="align-top text-sm">
-                      {submitted && update.impact
-                        ? IMPACT_LABEL[update.impact]
-                        : "—"}
+                      {project.impact ? IMPACT_LABEL[project.impact] : "—"}
                     </TableCell>
                     <TableCell className="align-top text-sm">
                       {project.nextMilestone?.name ?? "—"}

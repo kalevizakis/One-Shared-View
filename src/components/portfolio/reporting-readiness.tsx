@@ -254,7 +254,18 @@ export function ReportingReadiness({
                         Notify
                       </Button>
                     )
-                  ) : null}
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="shrink-0"
+                      disabled
+                      title="Notifications are disabled in read-only preview."
+                    >
+                      <BellRing className="size-3.5" />
+                      Notify
+                    </Button>
+                  )}
                 </div>
               );
             })}

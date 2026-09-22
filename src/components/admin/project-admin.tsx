@@ -24,8 +24,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { saveProject } from "@/app/actions/admin";
-import { LIFECYCLE_LABEL } from "@/lib/domain/status";
+import { IMPACT_LABEL, LIFECYCLE_LABEL } from "@/lib/domain/status";
 import type {
+  ImpactLevel,
   LifecycleStatus,
   Portfolio,
   Profile,
@@ -46,6 +47,8 @@ interface Draft {
   name: string;
   executiveSummary: string;
   expectedValue: string;
+  /** `NONE` while no impact has been assessed — Select has no empty value. */
+  impact: ImpactLevel | typeof NONE;
   ownerProfileId: string;
   leadProfileId: string;
   lifecycleStatus: LifecycleStatus;
@@ -58,6 +61,7 @@ function emptyDraft(): Draft {
     name: "",
     executiveSummary: "",
     expectedValue: "",
+    impact: NONE,
     ownerProfileId: NONE,
     leadProfileId: NONE,
     lifecycleStatus: "active",
@@ -79,6 +83,7 @@ export function ProjectAdmin({ projects, people, portfolio }: ProjectAdminProps)
       name: project.name,
       executiveSummary: project.executive_summary ?? "",
       expectedValue: project.expected_value ?? "",
+      impact: project.impact ?? NONE,
       ownerProfileId: project.owner_profile_id ?? NONE,
       leadProfileId: project.lead_profile_id ?? NONE,
       lifecycleStatus: project.lifecycle_status,
@@ -94,6 +99,7 @@ export function ProjectAdmin({ projects, people, portfolio }: ProjectAdminProps)
     formData.set("name", draft.name);
     formData.set("executiveSummary", draft.executiveSummary);
     formData.set("expectedValue", draft.expectedValue);
+    formData.set("impact", draft.impact === NONE ? "" : draft.impact);
     formData.set("ownerProfileId", draft.ownerProfileId);
     formData.set("leadProfileId", draft.leadProfileId);
     formData.set("lifecycleStatus", draft.lifecycleStatus);
@@ -179,6 +185,28 @@ export function ProjectAdmin({ projects, people, portfolio }: ProjectAdminProps)
                 }
                 maxLength={1200}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="project-impact">Impact</Label>
+              <Select
+                value={draft.impact}
+                onValueChange={(value) =>
+                  setDraft({ ...draft, impact: value as Draft["impact"] })
+                }
+              >
+                <SelectTrigger id="project-impact">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NONE}>Not assessed</SelectItem>
+                  {(Object.keys(IMPACT_LABEL) as ImpactLevel[]).map((value) => (
+                    <SelectItem key={value} value={value}>
+                      {IMPACT_LABEL[value]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
@@ -296,6 +324,7 @@ export function ProjectAdmin({ projects, people, portfolio }: ProjectAdminProps)
               <TableHead>Project</TableHead>
               <TableHead>Owner</TableHead>
               <TableHead>Lead</TableHead>
+              <TableHead>Impact</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Action</TableHead>
             </TableRow>
@@ -309,6 +338,9 @@ export function ProjectAdmin({ projects, people, portfolio }: ProjectAdminProps)
                 </TableCell>
                 <TableCell className="text-sm">
                   {nameOf(project.lead_profile_id)}
+                </TableCell>
+                <TableCell className="text-sm">
+                  {project.impact ? IMPACT_LABEL[project.impact] : "—"}
                 </TableCell>
                 <TableCell className="text-sm">
                   {LIFECYCLE_LABEL[project.lifecycle_status]}

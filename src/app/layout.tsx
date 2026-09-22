@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
+import { HideSparkBadge } from "@/components/layout/hide-spark-badge";
 
 const pfizerTomorrow = localFont({
   src: [
@@ -75,6 +76,7 @@ export default function RootLayout({
             Skip to main content
           </a>
           {children}
+          <HideSparkBadge />
           <Toaster position="bottom-right" />
         </ThemeProvider>
       </body>
